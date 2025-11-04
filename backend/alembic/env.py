@@ -26,9 +26,15 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+from app.models import Base
+# Import all models to register them with Base.metadata
+from app.models.tutor import Tutor
+from app.models.session import Session
+from app.models.reschedule import Reschedule
+from app.models.tutor_score import TutorScore
+from app.models.email_report import EmailReport
+
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
