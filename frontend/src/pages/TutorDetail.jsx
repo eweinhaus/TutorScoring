@@ -18,6 +18,12 @@ function TutorDetail() {
   const { tutor, history, isLoading, error, refetch } = useTutorDetail(id)
   const [selectedTimePeriod, setSelectedTimePeriod] = useState('30d')
 
+  // Normalize tutor score data - handle both API response formats
+  const tutorScore = useMemo(() => {
+    if (!tutor) return null
+    return tutor.scores || tutor.statistics || tutor.tutor_score || null
+  }, [tutor])
+
   // Prepare chart data from history
   const chartData = useMemo(() => {
     if (!history || !history.reschedules || history.reschedules.length === 0) {
@@ -27,8 +33,6 @@ function TutorDetail() {
     // Group reschedules by date and calculate rates
     // For MVP, we'll use the tutor_score data if available
     // Otherwise, create simplified data points
-    const tutorScore = tutor?.tutor_score
-
     if (tutorScore) {
       // Create data points from tutor score history (if available)
       // For now, we'll show current rates as a single data point
@@ -43,7 +47,7 @@ function TutorDetail() {
     }
 
     return []
-  }, [history, tutor])
+  }, [history, tutorScore])
 
   // Get recent reschedules (last 10-20)
   const recentReschedules = useMemo(() => {
@@ -53,7 +57,7 @@ function TutorDetail() {
 
   // Generate insights
   const insights = useMemo(() => {
-    if (!tutor || !tutor.tutor_score) {
+    if (!tutorScore) {
       return {
         riskLevel: 'Unknown',
         description: 'No data available',
@@ -61,9 +65,10 @@ function TutorDetail() {
       }
     }
 
-    const score = tutor.tutor_score
-    const rate30d = score.reschedule_rate_30d || 0
-    const rate7d = score.reschedule_rate_7d || 0
+    const score = tutorScore
+    // Convert string values to numbers for proper comparison
+    const rate30d = score.reschedule_rate_30d != null ? parseFloat(score.reschedule_rate_30d) || 0 : 0
+    const rate7d = score.reschedule_rate_7d != null ? parseFloat(score.reschedule_rate_7d) || 0 : 0
     const totalReschedules = score.tutor_reschedules_30d || 0
     const totalSessions = score.total_sessions_30d || 0
 
@@ -109,7 +114,7 @@ function TutorDetail() {
       description,
       recommendations,
     }
-  }, [tutor])
+  }, [tutorScore])
 
   if (isLoading) {
     return <LoadingSpinner message="Loading tutor details..." />
@@ -133,8 +138,14 @@ function TutorDetail() {
     )
   }
 
-  // Handle both API response formats: tutor.scores (from API) or tutor.tutor_score (legacy)
-  const tutorScore = tutor.scores || tutor.statistics || tutor.tutor_score || {}
+  // Use normalized tutorScore (already calculated above)
+  // Ensure score is an object with safe defaults
+  const score = tutorScore || {}
+  
+  // Safely extract rate for RiskBadge - handle string values
+  const rescheduleRate30d = score.reschedule_rate_30d != null 
+    ? (typeof score.reschedule_rate_30d === 'string' ? parseFloat(score.reschedule_rate_30d) : score.reschedule_rate_30d)
+    : null
 
   return (
     <div>
@@ -170,26 +181,26 @@ function TutorDetail() {
             </h1>
             <p className="text-gray-600 mb-4">{tutor.email}</p>
           </div>
-          <RiskBadge rate={tutorScore.reschedule_rate_30d} size="large" />
+          <RiskBadge rate={rescheduleRate30d} size="large" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
           <div>
             <p className="text-sm text-gray-600 mb-1">Total Sessions (30d)</p>
             <p className="text-2xl font-bold text-gray-900">
-              {tutorScore.total_sessions_30d || 0}
+              {score.total_sessions_30d || 0}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Reschedule Rate (30d)</p>
             <p className="text-2xl font-bold text-gray-900">
-              {formatPercentage(tutorScore.reschedule_rate_30d)}
+              {formatPercentage(score.reschedule_rate_30d)}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Last Updated</p>
             <p className="text-2xl font-bold text-gray-900">
-              {formatDate(tutorScore.last_calculated_at || tutor.updated_at)}
+              {formatDate(score.last_calculated_at || tutor.updated_at)}
             </p>
           </div>
         </div>
@@ -226,17 +237,17 @@ function TutorDetail() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard
           label="Total Sessions (7d)"
-          value={tutorScore.total_sessions_7d || 0}
+          value={score.total_sessions_7d || 0}
           color="primary"
         />
         <StatsCard
           label="Total Sessions (30d)"
-          value={tutorScore.total_sessions_30d || 0}
+          value={score.total_sessions_30d || 0}
           color="primary"
         />
         <StatsCard
           label="Total Sessions (90d)"
-          value={tutorScore.total_sessions_90d || 0}
+          value={score.total_sessions_90d || 0}
           color="primary"
         />
       </div>
@@ -244,17 +255,17 @@ function TutorDetail() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard
           label="Reschedules (7d)"
-          value={tutorScore.tutor_reschedules_7d || 0}
+          value={score.tutor_reschedules_7d || 0}
           color="warning"
         />
         <StatsCard
           label="Reschedules (30d)"
-          value={tutorScore.tutor_reschedules_30d || 0}
+          value={score.tutor_reschedules_30d || 0}
           color="warning"
         />
         <StatsCard
           label="Reschedules (90d)"
-          value={tutorScore.tutor_reschedules_90d || 0}
+          value={score.tutor_reschedules_90d || 0}
           color="warning"
         />
       </div>
@@ -262,33 +273,33 @@ function TutorDetail() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard
           label="Rate (7d)"
-          value={formatPercentage(tutorScore.reschedule_rate_7d)}
+          value={formatPercentage(score.reschedule_rate_7d)}
           color={
-            (tutorScore.reschedule_rate_7d || 0) >= RISK_THRESHOLD
+            (score.reschedule_rate_7d || 0) >= RISK_THRESHOLD
               ? 'danger'
-              : (tutorScore.reschedule_rate_7d || 0) >= RISK_THRESHOLD * 0.67
+              : (score.reschedule_rate_7d || 0) >= RISK_THRESHOLD * 0.67
               ? 'warning'
               : 'success'
           }
         />
         <StatsCard
           label="Rate (30d)"
-          value={formatPercentage(tutorScore.reschedule_rate_30d)}
+          value={formatPercentage(score.reschedule_rate_30d)}
           color={
-            (tutorScore.reschedule_rate_30d || 0) >= RISK_THRESHOLD
+            (score.reschedule_rate_30d || 0) >= RISK_THRESHOLD
               ? 'danger'
-              : (tutorScore.reschedule_rate_30d || 0) >= RISK_THRESHOLD * 0.67
+              : (score.reschedule_rate_30d || 0) >= RISK_THRESHOLD * 0.67
               ? 'warning'
               : 'success'
           }
         />
         <StatsCard
           label="Rate (90d)"
-          value={formatPercentage(tutorScore.reschedule_rate_90d)}
+          value={formatPercentage(score.reschedule_rate_90d)}
           color={
-            (tutorScore.reschedule_rate_90d || 0) >= RISK_THRESHOLD
+            (score.reschedule_rate_90d || 0) >= RISK_THRESHOLD
               ? 'danger'
-              : (tutorScore.reschedule_rate_90d || 0) >= RISK_THRESHOLD * 0.67
+              : (score.reschedule_rate_90d || 0) >= RISK_THRESHOLD * 0.67
               ? 'warning'
               : 'success'
           }

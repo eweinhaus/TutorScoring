@@ -73,11 +73,18 @@ export const formatHours = (hours) => {
  * @returns {string} Color name ('red', 'yellow', or 'green')
  */
 export const getRiskColor = (rate, threshold = 15) => {
-  if (rate === null || rate === undefined || isNaN(rate)) {
+  // Handle null, undefined, empty string, or invalid values
+  if (rate === null || rate === undefined || rate === '') {
     return 'gray'
   }
   
+  // Convert to number, handle string values
   const value = parseFloat(rate)
+  
+  // Check if conversion resulted in NaN
+  if (isNaN(value)) {
+    return 'gray'
+  }
   
   if (value >= threshold) {
     return 'red'
