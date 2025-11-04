@@ -2,6 +2,9 @@
 
 ## Project Overview
 
+This is a take home project asigned by a FinTech software company to assess potential AI Software Engineer hires. This will be shown as demo in an interview.
+
+
 Create an automated system that evaluates tutor performance across every session, identifies coaching opportunities, predicts which tutors will churn, and recommends interventions.
 
 **Key Performance Requirements:**

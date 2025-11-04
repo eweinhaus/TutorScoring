@@ -389,6 +389,22 @@ components/
 - **Integration Tests:** API integration, data flow
 - **Manual Testing:** User acceptance testing
 
+### API Parameter Naming Convention
+
+**Important Pattern:** Frontend constants must match backend API expectations exactly:
+- Backend expects: `reschedule_rate_30d`, `total_sessions_30d`
+- Frontend constants in `utils/constants.js` must use these exact names
+- Mismatch causes 400 Bad Request errors
+
+### Component Error Handling Pattern
+
+**Defensive Programming for API Data:**
+- API may return string numbers (e.g., `"80.00"`) or null values
+- Components must safely parse and validate all values
+- Use try-catch blocks around risky operations
+- Normalize data before passing to child components
+- Example: RiskBadge component handles string/number/null/undefined safely
+
 ---
 
 ## Key Architectural Decisions

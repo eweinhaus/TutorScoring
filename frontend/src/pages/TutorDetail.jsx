@@ -142,10 +142,16 @@ function TutorDetail() {
   // Ensure score is an object with safe defaults
   const score = tutorScore || {}
   
-  // Safely extract rate for RiskBadge - handle string values
-  const rescheduleRate30d = score.reschedule_rate_30d != null 
-    ? (typeof score.reschedule_rate_30d === 'string' ? parseFloat(score.reschedule_rate_30d) : score.reschedule_rate_30d)
-    : null
+  // Safely extract rate for RiskBadge - handle string values and NaN
+  let rescheduleRate30d = null
+  if (score.reschedule_rate_30d != null) {
+    const parsed = typeof score.reschedule_rate_30d === 'string' 
+      ? parseFloat(score.reschedule_rate_30d) 
+      : Number(score.reschedule_rate_30d)
+    if (!isNaN(parsed) && isFinite(parsed)) {
+      rescheduleRate30d = parsed
+    }
+  }
 
   return (
     <div>
@@ -179,9 +185,11 @@ function TutorDetail() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {tutor.name}
             </h1>
-            <p className="text-gray-600 mb-4">{tutor.email}</p>
+            <p className="text-gray-600 mb-4">{tutor.email || 'No email provided'}</p>
           </div>
-          <RiskBadge rate={rescheduleRate30d} size="large" />
+          {rescheduleRate30d !== null && (
+            <RiskBadge rate={rescheduleRate30d} size="large" />
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">

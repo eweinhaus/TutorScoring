@@ -66,7 +66,7 @@ class TutorDetailResponse(BaseModel):
     name: str
     email: Optional[str] = None
     created_at: datetime
-    scores: 'TutorScoreResponse'
+    scores: Optional['TutorScoreResponse'] = None  # Optional - tutors may not have scores yet
     statistics: dict  # Same as scores but different name for clarity
     
     model_config = ConfigDict(from_attributes=True)

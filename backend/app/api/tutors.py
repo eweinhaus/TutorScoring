@@ -132,23 +132,21 @@ async def get_tutor_detail_endpoint(
                 detail=f"Tutor with id {tutor_id} not found"
             )
         
-        # Get scores
+        # Get scores (allow None - some tutors may not have scores yet)
         tutor_score = tutor.tutor_score if hasattr(tutor, 'tutor_score') else None
-        if not tutor_score:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Tutor scores not found for tutor {tutor_id}"
-            )
         
         # Get statistics (same as scores)
         statistics = get_tutor_statistics(tutor_id, db)
+        
+        # Handle case where tutor_score is None (create empty response)
+        scores_data = TutorScoreResponse.model_validate(tutor_score) if tutor_score else None
         
         return TutorDetailResponse(
             id=tutor.id,
             name=tutor.name,
             email=tutor.email,
             created_at=tutor.created_at,
-            scores=TutorScoreResponse.model_validate(tutor_score),
+            scores=scores_data,
             statistics=statistics
         )
         
