@@ -85,3 +85,5 @@ alembic.ini.bak
 *.bak
 *.swp
 
+planning/
+memory-bank/
