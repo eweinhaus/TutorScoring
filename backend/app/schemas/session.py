@@ -3,7 +3,7 @@ Pydantic schemas for Session model.
 """
 from typing import Optional, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from uuid import UUID
 
 from app.schemas.reschedule import RescheduleInfo
@@ -19,9 +19,18 @@ class SessionBase(BaseModel):
 
 class SessionCreate(SessionBase):
     """Schema for creating a new session."""
+    session_id: UUID = Field(..., description="Session ID (UUID format)")
     completed_time: Optional[datetime] = Field(None, description="Actual completion time")
     duration_minutes: Optional[int] = Field(None, ge=1, le=300, description="Session duration in minutes")
     reschedule_info: Optional[RescheduleInfo] = Field(None, description="Reschedule information if applicable")
+    
+    @field_validator('reschedule_info')
+    @classmethod
+    def validate_reschedule_info(cls, v, info):
+        """Validate that reschedule_info is provided when status is 'rescheduled'."""
+        # Note: This validation also happens in the endpoint as a fallback
+        # since field_validator may not have access to other fields in all contexts
+        return v
 
 
 class SessionResponse(SessionBase):

@@ -1,4 +1,3 @@
 """
-API route handlers
+API routes package.
 """
-

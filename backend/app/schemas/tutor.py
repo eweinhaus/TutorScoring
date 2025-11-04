@@ -46,3 +46,51 @@ class TutorWithScores(TutorResponse):
     
     model_config = ConfigDict(from_attributes=True)
 
+
+class TutorListResponse(BaseModel):
+    """Schema for tutor list API responses."""
+    id: UUID
+    name: str
+    reschedule_rate_30d: Optional[float] = None
+    is_high_risk: bool = False
+    total_sessions_30d: int = 0
+    tutor_reschedules_30d: int = 0
+    last_calculated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TutorDetailResponse(BaseModel):
+    """Schema for tutor detail API responses."""
+    id: UUID
+    name: str
+    email: Optional[str] = None
+    created_at: datetime
+    scores: 'TutorScoreResponse'
+    statistics: dict  # Same as scores but different name for clarity
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TutorListPaginatedResponse(BaseModel):
+    """Schema for paginated tutor list responses."""
+    tutors: list[TutorListResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class TutorHistoryResponse(BaseModel):
+    """Schema for tutor history API responses."""
+    reschedules: list['RescheduleResponse']
+    trend: dict  # Contains reschedule_rate_by_week data
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Forward references
+from app.schemas.tutor_score import TutorScoreResponse
+from app.schemas.reschedule import RescheduleResponse
+TutorDetailResponse.model_rebuild()
+TutorHistoryResponse.model_rebuild()
+
