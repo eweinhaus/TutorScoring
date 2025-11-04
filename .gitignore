@@ -38,6 +38,7 @@ build/
 *.swo
 *~
 .DS_Store
+.cursor/mcp.json
 
 # Database
 *.db

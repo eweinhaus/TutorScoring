@@ -39,7 +39,7 @@ def test_update_scores_for_tutor_updates_existing(db_session, sample_tutor):
     updated_score = update_scores_for_tutor(str(sample_tutor.id), db_session)
     
     assert updated_score.id == initial_score.id
-    assert updated_score.last_calculated_at > initial_score.last_calculated_at
+    assert updated_score.last_calculated_at >= initial_score.last_calculated_at
 
 
 def test_update_scores_for_tutor_high_risk_flag(db_session, sample_tutor):

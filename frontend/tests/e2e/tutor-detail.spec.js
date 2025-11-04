@@ -218,7 +218,9 @@ test.describe('Tutor Detail Page', () => {
     ]);
     
     // Check for chart container (Recharts uses SVG) or no data message
-    const chart = page.locator('svg').first();
+    // Look for SVG specifically within the chart section, not the back button icon
+    const chartSection = page.locator('h3:has-text("Reschedule Rate Trends")').locator('..');
+    const chart = chartSection.locator('svg.recharts-surface').first();
     const noData = page.locator('text=/no chart data/i');
     const errorMessage = page.locator('text=/error/i, text=/unable to connect/i');
     

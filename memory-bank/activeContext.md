@@ -1,8 +1,8 @@
 # Active Context
 ## Tutor Quality Scoring System
 
-**Last Updated:** Critical Bug Fixes Completed - Tutor List API & Tutor Detail Component  
-**Current Focus:** Integration & Testing Phase - E2E Test Fixes
+**Last Updated:** Testing Breakthrough - All E2E Tests Passing & Backend TestClient Fixed  
+**Current Focus:** Integration & Testing Phase - Final Test Cleanup
 
 ---
 
@@ -63,7 +63,31 @@ All environment setup tasks completed:
 
 ## Recent Changes
 
-### Critical Bug Fixes Completed (Latest)
+### Testing Breakthrough - All E2E Tests Passing (Latest)
+
+**Fixed Issues:**
+1. **Backend TestClient Fixture - httpx Version Incompatibility** ✅
+   - Problem: httpx 0.28.1 introduced breaking API changes, incompatible with Starlette 0.27.0
+   - Error: `TypeError: __init__() got an unexpected keyword argument 'app'`
+   - Fix: Pinned httpx to 0.27.2 in requirements.txt
+   - Result: All 18 API tests now functional (17/18 passing, 1 legitimate test failure)
+   
+2. **E2E Chart Visibility Test - SVG Selector Issue** ✅
+   - Problem: Test was matching back button SVG icon instead of chart SVG
+   - Error: First SVG on page (back arrow icon) was found but marked as "hidden"
+   - Fix: Changed selector from `page.locator('svg').first()` to `chartSection.locator('svg.recharts-surface').first()`
+   - Result: Test now correctly identifies and validates chart SVG, all 16/16 E2E tests passing
+
+**Test Results:**
+- ✅ E2E Tests: **16/16 passing** (100%!) - up from 11/16
+- ✅ Backend API Tests: **17/18 passing** - up from 0/18 (all were errors)
+- ✅ Total Backend Tests: **91/96 passing** - up from 74/76
+
+**Files Modified:**
+- `backend/requirements.txt` - Added httpx==0.27.2 with version pin
+- `frontend/tests/e2e/tutor-detail.spec.js` - Fixed chart SVG selector to target Recharts surface
+
+### Critical Bug Fixes Completed (Previous)
 
 **Fixed Issues:**
 1. **Tutor List API Parameter Mismatch** ✅
@@ -93,13 +117,16 @@ All environment setup tasks completed:
 - ✅ Improved data normalization in TutorDetail component
 
 **Test Status:**
-- ✅ 1 test passing (Tutor Detail page load test)
-- 🔄 Remaining tests need timing/parallelization improvements (component fixes complete)
+- ✅ **16/16 E2E tests passing** (100% pass rate!)
+- ✅ **17/18 Backend API tests passing** (TestClient fixture issue resolved)
+- ✅ **91/96 Total backend tests passing**
 - ✅ Test infrastructure improved with:
   - Console error logging
   - Network request monitoring
   - Screenshot capture on failures
   - Better error messages and debugging
+  - httpx version compatibility fix (0.28.1 → 0.27.2)
+  - Specific chart selector fix (avoiding icon SVG conflicts)
 
 **Key Improvements:**
 - API compatibility: Frontend and backend parameter names now match

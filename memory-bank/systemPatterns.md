@@ -379,15 +379,27 @@ components/
 
 ### Backend Testing
 
-- **Unit Tests:** Service methods, calculations
-- **Integration Tests:** API endpoints, database operations
+- **Unit Tests:** Service methods, calculations ✅
+- **Integration Tests:** API endpoints, database operations ✅
 - **Performance Tests:** Query optimization, load testing
+- **TestClient:** Uses FastAPI TestClient with httpx 0.27.2 (pinned for Starlette compatibility) ✅
+- **Status:** 91/96 tests passing (94.8%), 17/18 API tests passing (94.4%)
 
 ### Frontend Testing
 
+- **E2E Tests:** Playwright tests for full user flows ✅
 - **Component Tests:** Render, user interactions
-- **Integration Tests:** API integration, data flow
+- **Integration Tests:** API integration, data flow ✅
 - **Manual Testing:** User acceptance testing
+- **Status:** 16/16 E2E tests passing (100%) ✅
+
+### Test Selector Best Practices
+
+**E2E Test Patterns:**
+- Use specific, semantic selectors (avoid generic `svg`, `div`, etc.)
+- Target component sections before selecting elements within
+- Use Recharts-specific classes (`recharts-surface`) for chart elements
+- Example: `chartSection.locator('svg.recharts-surface')` not `page.locator('svg').first()`
 
 ### API Parameter Naming Convention
 
@@ -404,6 +416,14 @@ components/
 - Use try-catch blocks around risky operations
 - Normalize data before passing to child components
 - Example: RiskBadge component handles string/number/null/undefined safely
+
+### Dependency Version Management
+
+**Critical Version Pins:**
+- **httpx==0.27.2** - Required for Starlette 0.27.0 TestClient compatibility
+  - httpx 0.28.1+ introduces breaking changes (removes `app` parameter)
+  - TestClient fixture fails with newer httpx versions
+  - Always pin httpx to compatible version in requirements.txt
 
 ---
 

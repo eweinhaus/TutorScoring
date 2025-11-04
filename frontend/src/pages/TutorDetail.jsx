@@ -188,7 +188,7 @@ function TutorDetail() {
             <p className="text-gray-600 mb-4">{tutor.email || 'No email provided'}</p>
           </div>
           {rescheduleRate30d !== null && (
-            <RiskBadge rate={rescheduleRate30d} size="large" />
+          <RiskBadge rate={rescheduleRate30d} size="large" />
           )}
         </div>
 

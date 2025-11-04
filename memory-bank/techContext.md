@@ -37,6 +37,7 @@ redis==5.0.1
 sendgrid==6.11.0
 python-dotenv==1.0.0
 pydantic==2.5.0
+httpx==0.27.2  # Pinned for Starlette TestClient compatibility
 ```
 
 ### Frontend Stack
@@ -331,7 +332,16 @@ npm run dev
 cd backend
 pytest tests/ -v
 ```
-**Status:** ✅ 74/76 tests passing
+**Status:** ✅ 91/96 tests passing (94.8%)
+- API Tests: ✅ 17/18 passing (94.4%)
+- TestClient fixture: ✅ Fixed (httpx pinned to 0.27.2)
+
+**Frontend E2E Tests:**
+```bash
+cd frontend
+npm run test:e2e
+```
+**Status:** ✅ 16/16 tests passing (100%)
 
 ### Database Migrations
 
