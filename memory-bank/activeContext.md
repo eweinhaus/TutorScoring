@@ -1,8 +1,8 @@
 # Active Context
 ## Tutor Quality Scoring System
 
-**Last Updated:** Frontend Dashboard Complete  
-**Current Focus:** Integration & Testing Phase
+**Last Updated:** Test Improvements Completed  
+**Current Focus:** Integration & Testing Phase - E2E Test Improvements
 
 ---
 
@@ -48,7 +48,11 @@ All environment setup tasks completed:
 
 **Next Immediate Steps:**
 1. Integration & Testing
-   - End-to-end testing with Playwright
+   - ✅ Test data generated (578 tutors with sessions)
+   - ✅ API connection verified
+   - ✅ Test timeouts increased and error handling improved
+   - ✅ Data structure mismatches fixed
+   - 🔄 End-to-end testing with Playwright (6 tests passing, 5 failing)
    - Frontend-backend integration verification
    - Performance testing
    - Demo preparation
@@ -57,7 +61,39 @@ All environment setup tasks completed:
 
 ## Recent Changes
 
-### Frontend Dashboard Completed (Latest)
+### Test Improvements Completed (Latest)
+
+**Completed Tasks:**
+- ✅ Generated test data in backend (578 tutors, 3000+ sessions, 90 days of history)
+- ✅ Verified frontend API connection - `.env` configured with correct `VITE_API_URL=http://localhost:8001`
+- ✅ Increased timeouts in tests (from 15s to 30-60s) for slower API responses
+- ✅ Added comprehensive error handling for empty states, loading states, and API errors
+- ✅ Fixed data structure mismatches - Frontend now handles both API response formats:
+  - List API returns `reschedule_rate_30d` directly on tutor object
+  - Detail API returns nested `scores` and `statistics` objects
+  - Frontend components updated to check both formats
+
+**Test Status:**
+- ✅ 6 tests passing (Dashboard and Navigation tests)
+- 🔄 5 tests failing (Tutor List and Tutor Detail tests - debugging in progress)
+- ✅ Test infrastructure improved with:
+  - Console error logging
+  - Network request monitoring
+  - Screenshot capture on failures
+  - Better error messages and debugging
+
+**Key Improvements:**
+- Test data: 578 tutors with realistic reschedule patterns
+- API connectivity: Verified and working
+- Test robustness: Better handling of async loading, polling, and errors
+- Data compatibility: Frontend handles API response variations
+
+**Next Steps:**
+- Continue debugging Tutor List tests (table not appearing)
+- Investigate React Query polling interfering with tests
+- Verify API authentication headers are being sent correctly
+
+### Frontend Dashboard Completed
 
 **Completed Tasks:**
 - ✅ React application setup with Vite
@@ -129,12 +165,13 @@ All environment setup tasks completed:
 
 **Current System State:**
 - FastAPI Server: ✅ Running on port 8001
-- Database: ✅ Connected and working
+- Database: ✅ Connected and working (578 tutors, 3000+ sessions)
 - Redis: ✅ Connected and working
 - API Endpoints: ✅ All functional
 - Celery Tasks: ✅ Implemented and ready
 - Email Service: ✅ SendGrid integrated
-- Tests: ✅ 74/76 tests passing (2 minor failures)
+- Backend Tests: ✅ 74/76 tests passing (2 minor failures)
+- Frontend E2E Tests: 🔄 6/16 tests passing (Dashboard & Navigation passing)
 
 **Key Implementation Details:**
 - All API endpoints return correct responses
@@ -343,7 +380,7 @@ All environment setup tasks completed:
 - Comprehensive test suite (74 tests passing)
 - Application running and verified
 
-**Next Phase:** Integration & Testing (End-to-end testing with Playwright)
+**Next Phase:** Integration & Testing (End-to-end testing with Playwright - 6/16 tests passing, improvements completed)
 
 ---
 
@@ -365,10 +402,12 @@ When resuming work:
 2. **Review Planning Docs** - Check `/planning/` for detailed requirements
 3. **Frontend Dashboard Complete** - All React components and pages implemented, ready for testing
 4. **Backend Services Complete** - All API endpoints working, server running on port 8001
-5. **Next Phase: Integration & Testing** - End-to-end testing with Playwright, frontend-backend integration
-6. **Install Dependencies** - Frontend requires `npm install` before running (Node.js 18+ required)
-7. **Test Setup** - Use Playwright MCP for end-to-end testing
-8. **Backend Running** - FastAPI server on http://localhost:8001, Celery worker can be started separately
+5. **Next Phase: Integration & Testing** - End-to-end testing with Playwright (6/16 tests passing, improvements completed)
+6. **Test Status** - Dashboard and Navigation tests passing, Tutor List/Detail tests need debugging
+7. **Test Data** - 578 tutors with sessions generated and available in database
+8. **Test Improvements** - Timeouts increased, error handling added, data structure fixes completed
+9. **Backend Running** - FastAPI server on http://localhost:8001, Celery worker can be started separately
+10. **Frontend Running** - Vite dev server on http://localhost:3000, Playwright configured for E2E testing
 
 ---
 

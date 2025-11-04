@@ -7,17 +7,26 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should load dashboard page', async ({ page }) => {
-    // Check page title or heading
-    await expect(page.locator('h1')).toContainText('Dashboard');
+    // Wait for page to load (don't wait for networkidle due to polling)
+    await page.waitForLoadState('domcontentloaded');
+    // Check page title or heading (use more specific selector - main content h1, not header)
+    const dashboardHeading = page.locator('main h1, [role="main"] h1').first();
+    await expect(dashboardHeading).toContainText('Dashboard', { timeout: 30000 });
   });
 
   test('should display summary cards', async ({ page }) => {
-    // Wait for cards to load
-    await page.waitForSelector('[class*="card"]', { timeout: 10000 });
+    // Wait for page to load
+    await page.waitForLoadState('domcontentloaded');
+    // Wait for spinner to disappear if present
+    const spinner = page.locator('[class*="spinner"], [class*="loading"]');
+    if (await spinner.count() > 0) {
+      await spinner.first().waitFor({ state: 'hidden', timeout: 30000 });
+    }
+    await page.waitForSelector('[class*="card"]', { timeout: 30000 });
     
     // Check for summary statistics
     const cards = page.locator('[class*="card"]');
-    await expect(cards.first()).toBeVisible();
+    await expect(cards.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should navigate to tutor list', async ({ page }) => {

@@ -133,7 +133,8 @@ function TutorDetail() {
     )
   }
 
-  const tutorScore = tutor.tutor_score || {}
+  // Handle both API response formats: tutor.scores (from API) or tutor.tutor_score (legacy)
+  const tutorScore = tutor.scores || tutor.statistics || tutor.tutor_score || {}
 
   return (
     <div>

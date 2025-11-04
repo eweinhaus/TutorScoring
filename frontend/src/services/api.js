@@ -66,7 +66,7 @@ apiClient.interceptors.response.use(
  * Get list of tutors with optional filters
  * @param {Object} filters - Filter options
  * @param {string} filters.risk_status - Filter by risk status (high_risk, low_risk, all)
- * @param {string} filters.sort_by - Sort field (reschedule_rate, total_sessions, name)
+ * @param {string} filters.sort_by - Sort field (reschedule_rate_30d, total_sessions_30d, name)
  * @param {string} filters.sort_order - Sort order (asc, desc)
  * @param {number} filters.limit - Number of results per page
  * @param {number} filters.offset - Offset for pagination

@@ -54,12 +54,12 @@ function TutorList() {
 
         switch (sortBy) {
           case SORT_OPTIONS.RESCHEDULE_RATE:
-            aValue = a.tutor_score?.reschedule_rate_30d || 0
-            bValue = b.tutor_score?.reschedule_rate_30d || 0
+            aValue = a.reschedule_rate_30d || a.tutor_score?.reschedule_rate_30d || 0
+            bValue = b.reschedule_rate_30d || b.tutor_score?.reschedule_rate_30d || 0
             break
           case SORT_OPTIONS.TOTAL_SESSIONS:
-            aValue = a.tutor_score?.total_sessions_30d || 0
-            bValue = b.tutor_score?.total_sessions_30d || 0
+            aValue = a.total_sessions_30d || a.tutor_score?.total_sessions_30d || 0
+            bValue = b.total_sessions_30d || b.tutor_score?.total_sessions_30d || 0
             break
           case SORT_OPTIONS.NAME:
             aValue = a.name || ''

@@ -29,20 +29,20 @@ function Dashboard() {
 
     // Count high-risk tutors (reschedule_rate_30d >= threshold)
     const highRiskCount = tutors.filter((tutor) => {
-      const rate = tutor.tutor_score?.reschedule_rate_30d || 0
+      const rate = tutor.reschedule_rate_30d || tutor.tutor_score?.reschedule_rate_30d || 0
       return rate >= RISK_THRESHOLD
     }).length
 
     // Calculate average reschedule rate
     const totalRate = tutors.reduce((sum, tutor) => {
-      return sum + (tutor.tutor_score?.reschedule_rate_30d || 0)
+      return sum + (tutor.reschedule_rate_30d || tutor.tutor_score?.reschedule_rate_30d || 0)
     }, 0)
     const averageRescheduleRate = totalTutors > 0 ? totalRate / totalTutors : 0
 
     // Count recent activity (tutors with sessions in last 7 days)
     // For now, we'll use tutors with recent score calculations as a proxy
     const recentActivity = tutors.filter((tutor) => {
-      const lastUpdated = tutor.tutor_score?.last_calculated_at || tutor.updated_at
+      const lastUpdated = tutor.last_calculated_at || tutor.tutor_score?.last_calculated_at || tutor.updated_at
       if (!lastUpdated) return false
       const daysSinceUpdate =
         (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60 * 24)

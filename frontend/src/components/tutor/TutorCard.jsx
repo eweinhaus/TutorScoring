@@ -19,9 +19,9 @@ function TutorCard({ tutor, onClick }) {
     }
   }
 
-  const rescheduleRate = tutor.tutor_score?.reschedule_rate_30d || 0
-  const totalSessions = tutor.tutor_score?.total_sessions_30d || 0
-  const lastUpdated = tutor.tutor_score?.last_calculated_at || tutor.updated_at
+  const rescheduleRate = tutor.reschedule_rate_30d || tutor.tutor_score?.reschedule_rate_30d || 0
+  const totalSessions = tutor.total_sessions_30d || tutor.tutor_score?.total_sessions_30d || 0
+  const lastUpdated = tutor.last_calculated_at || tutor.tutor_score?.last_calculated_at || tutor.updated_at
 
   return (
     <div

@@ -26,8 +26,8 @@ export const RISK_STATUS = {
  * Sort options for tutor list
  */
 export const SORT_OPTIONS = {
-  RESCHEDULE_RATE: 'reschedule_rate',
-  TOTAL_SESSIONS: 'total_sessions',
+  RESCHEDULE_RATE: 'reschedule_rate_30d',
+  TOTAL_SESSIONS: 'total_sessions_30d',
   NAME: 'name',
 }
 
