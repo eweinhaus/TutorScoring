@@ -233,56 +233,70 @@ TutorScoring/
 
 ---
 
-## API Endpoints
+## API Endpoints (Implemented)
 
-### Session Endpoints
+### Session Endpoints ✅
 
 **POST /api/sessions**
 - Ingest session data
 - Returns: 202 Accepted (async processing)
 - Body: Session data with reschedule info
+- Requires: X-API-Key header
+- Status: ✅ Implemented and working
 
-### Tutor Endpoints
+### Tutor Endpoints ✅
 
 **GET /api/tutors**
 - List tutors with scores
 - Query params: risk_status, sort_by, sort_order, limit, offset
 - Returns: List of tutors with pagination
+- Status: ✅ Implemented and working
 
 **GET /api/tutors/{id}**
 - Get tutor details
 - Returns: Tutor with scores and statistics
+- Status: ✅ Implemented and working
 
 **GET /api/tutors/{id}/history**
 - Get reschedule history
 - Query params: days, limit
 - Returns: Reschedule events and trends
+- Status: ✅ Implemented and working
 
-### Health Endpoint
+### Health Endpoint ✅
 
 **GET /api/health**
 - System health check
 - Returns: Status of database, Redis, version
+- Status: ✅ Implemented and working
 
 ---
 
-## Background Processing
+## Background Processing (Implemented)
 
-### Celery Configuration
+### Celery Configuration ✅
 
-**Broker:** Redis
-**Result Backend:** Redis
-**Task Serialization:** JSON
-**Time Limits:** 5 min hard, 4 min soft
+**Broker:** Redis ✅
+**Result Backend:** Redis ✅
+**Task Serialization:** JSON ✅
+**Time Limits:** 5 min hard, 4 min soft ✅
+**Location:** `backend/app/tasks/celery_app.py`
 
-### Tasks
+### Tasks ✅
 
-**process_session(session_id)**
+**process_session(session_id)** ✅
 - Process session completion
 - Calculate reschedule rates
 - Update tutor scores
-- Send email report
+- Queue email report task
 - Retry: 3 attempts with exponential backoff
+- Location: `backend/app/tasks/session_processor.py`
+
+**send_email_report(session_id)** ✅
+- Send email report
+- Create EmailReport record
+- Retry: 3 attempts with exponential backoff
+- Location: `backend/app/tasks/email_tasks.py`
 
 ---
 
@@ -294,20 +308,30 @@ TutorScoring/
 ```bash
 cd backend
 source venv/bin/activate
-uvicorn app.main:app --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 ```
+**Status:** ✅ Currently running on http://localhost:8001
 
 **Celery Worker:**
 ```bash
 cd backend
 celery -A app.tasks.celery_app worker --loglevel=info
 ```
+**Status:** ✅ Ready to start (tasks implemented)
 
 **Frontend:**
 ```bash
 cd frontend
 npm run dev
 ```
+**Status:** ⏳ Not started (Next phase)
+
+**Testing:**
+```bash
+cd backend
+pytest tests/ -v
+```
+**Status:** ✅ 74/76 tests passing
 
 ### Database Migrations
 

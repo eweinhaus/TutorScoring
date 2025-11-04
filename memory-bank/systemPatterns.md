@@ -115,13 +115,28 @@ sessions (1) ──< (0 or 1) email_reports
 
 ## API Design Patterns
 
-### RESTful Endpoints
+### RESTful Endpoints (Implemented)
 
-- **POST /api/sessions** - Session ingestion (async, returns 202)
-- **GET /api/tutors** - List tutors with filters/sorting
-- **GET /api/tutors/{id}** - Tutor detail
-- **GET /api/tutors/{id}/history** - Reschedule history
-- **GET /api/health** - Health check
+- **POST /api/sessions** - Session ingestion (async, returns 202) ✅
+  - Requires X-API-Key header
+  - Validates session data
+  - Creates session and reschedule if needed
+  - Queues Celery task for processing
+  
+- **GET /api/tutors** - List tutors with filters/sorting ✅
+  - Query params: risk_status, sort_by, sort_order, limit, offset
+  - Returns paginated list with scores
+  
+- **GET /api/tutors/{id}** - Tutor detail ✅
+  - Returns tutor with scores and statistics
+  - Includes reschedule rates (7d, 30d, 90d)
+  
+- **GET /api/tutors/{id}/history** - Reschedule history ✅
+  - Returns reschedule events and weekly trends
+  - Query params: days, limit
+  
+- **GET /api/health** - Health check ✅
+  - Returns database and Redis connection status
 
 ### Request/Response Patterns
 
@@ -177,12 +192,30 @@ def process_session(self, session_id: str):
 
 ## Service Layer Patterns
 
-### Separation of Concerns
+### Separation of Concerns (Implemented)
 
-- **API Routes:** HTTP handling, validation
-- **Services:** Business logic, calculations
-- **Models:** Data access, relationships
-- **Tasks:** Background processing
+- **API Routes:** HTTP handling, validation ✅
+  - Located in `app/api/` directory
+  - Use Pydantic schemas for validation
+  - Return appropriate HTTP status codes
+  
+- **Services:** Business logic, calculations ✅
+  - `reschedule_calculator.py` - Rate calculations
+  - `score_service.py` - Score updates and risk flagging
+  - `tutor_service.py` - Tutor queries with filtering
+  - `session_service.py` - Session creation
+  - `email_service.py` - Email sending abstraction
+  - `email_report_service.py` - Report generation
+  
+- **Models:** Data access, relationships ✅
+  - SQLAlchemy ORM models
+  - Relationships properly configured
+  - Constraints and indexes in place
+  
+- **Tasks:** Background processing ✅
+  - `session_processor.py` - Processes sessions, updates scores
+  - `email_tasks.py` - Sends email reports
+  - Retry logic with exponential backoff
 
 ### Service Pattern Example
 
@@ -268,11 +301,21 @@ components/
 
 ## Performance Patterns
 
-### Database Optimization
+### Database Optimization (Implemented)
 
-- **Indexes:** Foreign keys, time-based queries, filter columns
-- **Query Optimization:** Eager loading, avoid N+1 queries
-- **Caching:** Redis cache for frequently accessed data
+- **Indexes:** Foreign keys, time-based queries, filter columns ✅
+  - All foreign keys indexed
+  - Time-based columns indexed (scheduled_time, created_at)
+  - Filter columns indexed (status, is_high_risk)
+  
+- **Query Optimization:** Eager loading, avoid N+1 queries ✅
+  - Uses `joinedload` for eager loading tutor scores
+  - Optimized tutor list queries with proper joins
+  
+- **Caching:** Redis cache for frequently accessed data ✅
+  - Tutor scores cached with 5-minute TTL
+  - Cache invalidation on score updates
+  - Graceful fallback if Redis unavailable
 
 ### API Optimization
 
