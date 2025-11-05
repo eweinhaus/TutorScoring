@@ -13,15 +13,39 @@ if [ -z "$ALB_DNS" ]; then
     exit 1
 fi
 
+# Get API key from AWS Secrets Manager
+echo "Fetching API key from AWS Secrets Manager..."
+API_KEY=$(aws secretsmanager get-secret-value \
+    --secret-id ${PROJECT_NAME}-secrets \
+    --region $REGION \
+    --query 'SecretString' \
+    --output text 2>/dev/null | jq -r '.API_KEY // empty')
+
+if [ -z "$API_KEY" ]; then
+    echo "⚠️  Warning: API_KEY not found in Secrets Manager"
+    echo "   API requests will fail without authentication"
+    echo "   Set API_KEY in Secrets Manager and rerun this script"
+fi
+
 # Build frontend
 cd ../../frontend
 echo "VITE_API_URL=http://${ALB_DNS}" > .env.production
+if [ -n "$API_KEY" ]; then
+    echo "VITE_API_KEY=${API_KEY}" >> .env.production
+    echo "✅ API key configured in build"
+else
+    echo "⚠️  Building without API key - API requests will fail"
+fi
 
 if [ ! -d "node_modules" ]; then
     npm install
 fi
 
 npm run build
+
+# Clean up .env.production (remove API key from disk for security)
+rm -f .env.production
+echo "🔒 Cleaned up .env.production file"
 
 # Create S3 bucket
 if ! aws s3api head-bucket --bucket $BUCKET_NAME --region $REGION 2>/dev/null; then

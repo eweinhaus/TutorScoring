@@ -93,6 +93,8 @@
 3. **reschedules** - Reschedule events (one-to-one with sessions)
 4. **tutor_scores** - Calculated scores (one-to-one with tutors)
 5. **email_reports** - Email history (many-to-one with sessions)
+6. **students** - Student profiles with preferences (for matching service)
+7. **match_predictions** - Pre-calculated match predictions (many-to-many relationship)
 
 ### Relationship Pattern
 
@@ -101,6 +103,8 @@ tutors (1) ──< (many) sessions
 sessions (1) ──< (0 or 1) reschedules
 tutors (1) ──< (1) tutor_scores
 sessions (1) ──< (0 or 1) email_reports
+students (1) ──< (many) match_predictions
+tutors (1) ──< (many) match_predictions
 ```
 
 ### Key Design Patterns
@@ -117,12 +121,14 @@ sessions (1) ──< (0 or 1) email_reports
 
 ### RESTful Endpoints (Implemented)
 
+**Session Endpoints:**
 - **POST /api/sessions** - Session ingestion (async, returns 202) ✅
   - Requires X-API-Key header
   - Validates session data
   - Creates session and reschedule if needed
   - Queues Celery task for processing
-  
+
+**Tutor Endpoints:**
 - **GET /api/tutors** - List tutors with filters/sorting ✅
   - Query params: risk_status, sort_by, sort_order, limit, offset
   - Returns paginated list with scores
@@ -134,9 +140,22 @@ sessions (1) ──< (0 or 1) email_reports
 - **GET /api/tutors/{id}/history** - Reschedule history ✅
   - Returns reschedule events and weekly trends
   - Query params: days, limit
-  
+
+**Health Endpoint:**
 - **GET /api/health** - Health check ✅
   - Returns database and Redis connection status
+
+**Matching Endpoints (Planned):**
+- **GET /api/matching/students** - List all students
+- **GET /api/matching/students/{id}** - Get student details
+- **POST /api/matching/students** - Create student
+- **GET /api/matching/tutors** - List tutors with preferences
+- **GET /api/matching/tutors/{id}** - Get tutor details with preferences
+- **PATCH /api/matching/tutors/{id}** - Update tutor preferences
+- **GET /api/matching/predict/{student_id}/{tutor_id}** - Get match prediction
+- **POST /api/matching/generate-all** - Generate all predictions (batch)
+- **GET /api/matching/students/{id}/matches** - Get all matches for student
+- **GET /api/matching/tutors/{id}/matches** - Get all matches for tutor
 
 ### Request/Response Patterns
 
@@ -351,28 +370,68 @@ components/
 
 ## Deployment Patterns
 
-### Render Deployment (Partial - Attempted)
+### AWS Deployment (Complete)
 
-**Services:**
-- Web Service: FastAPI application ✅ LIVE
-- Background Worker: Celery worker ✅ LIVE (Redis connection pending)
-- PostgreSQL: Managed database ✅ LIVE, migrations run
-- Redis: Managed Redis instance (Key Value) ⚠️ Created, connection strings need manual linking
-- Static Site: Frontend dashboard ✅ LIVE
+**Infrastructure:**
+- **Frontend:** S3 bucket → CloudFront CDN → HTTPS endpoint
+- **API:** ECS Fargate → Application Load Balancer → CloudFront `/api/*` proxy
+- **Worker:** ECS Fargate (background tasks)
+- **Database:** RDS PostgreSQL 14.19 (private subnet)
+- **Cache/Queue:** ElastiCache Redis (private subnet)
+- **Secrets:** AWS Secrets Manager
+- **Container Registry:** ECR (Elastic Container Registry)
 
-**Configuration:**
-- Environment variables from Render dashboard (manual for sensitive keys)
-- Build commands in render.yaml
-- Health checks for monitoring
-- CORS configured dynamically from environment variables
+**Network Architecture:**
+- VPC with public/private subnets (or default VPC with fallback)
+- Security groups for service isolation
+- Internal service communication via private subnets
+- NAT Gateway for outbound access (optional, uses public subnets if limit reached)
+- Application Load Balancer for public API access
+- Internet Gateway for public internet access
 
-**Deployment Notes:**
-- Python 3.13 compatibility required (dependencies upgraded)
-- Redis connection strings must be manually linked in dashboard (MCP API limitation)
-- Database migrations run successfully via Render Shell
-- Blueprint deployment creates all services but connection configuration is manual
+**Deployment Automation:**
+- Fully automated deployment scripts in `scripts/aws_deploy/`
+- Idempotent scripts (can run multiple times safely)
+- Prerequisites checking and installation
+- Error handling for AWS service limits
+- Secrets management with late prompting
+- CloudFront cache invalidation
 
-### Migration Pattern (Render → AWS)
+**Key Patterns:**
+- **Relative URLs:** Frontend uses `/api/*` (relative) to avoid mixed content
+- **CloudFront Proxy:** Cache behavior routes `/api/*` to ALB origin
+- **Docker Platform:** Build with `--platform linux/amd64` for ECS Fargate
+- **Service Limits:** Fallback to default VPC/subnets if limits reached
+- **Health Checks:** ALB health checks on `/api/health` endpoint
+- **Task Registration:** ECS tasks automatically register with ALB target groups
+
+**Security:**
+- AWS Secrets Manager for sensitive variables (vs. Render dashboard)
+- IAM roles for service permissions (ECS task execution role)
+- SSL/TLS via CloudFront (HTTPS for all traffic)
+- VPC security groups for network isolation
+- CloudWatch for monitoring and logging
+- S3 bucket policies for public read access
+- CORS configured for CloudFront origin only
+
+**Frontend Deployment Pattern:**
+```
+1. Build frontend (npm run build)
+2. Sync to S3 (aws s3 sync dist/ s3://bucket)
+3. Invalidate CloudFront cache (aws cloudfront create-invalidation)
+4. Wait 2-3 minutes for propagation
+```
+
+**API Deployment Pattern:**
+```
+1. Build Docker image (--platform linux/amd64)
+2. Push to ECR (docker push)
+3. Update ECS service (force-new-deployment)
+4. Wait for task to become healthy
+5. Verify ALB target health
+```
+
+### Render Deployment (Partial - Historical)
 
 **Infrastructure Mapping:**
 - Render Web Service → AWS ECS Fargate or EC2
@@ -477,9 +536,94 @@ components/
 
 ---
 
+## Matching Service Patterns
+
+### Matching Service Architecture
+
+**Components:**
+- **Student Model:** Stores student preferences and demographics
+- **Tutor Extension:** Adds matching preferences to existing tutor model
+- **Match Prediction Model:** Pre-calculated predictions for all student-tutor pairs
+- **ML Model:** XGBoost binary classifier for churn prediction
+- **AI Explanation Service:** GPT-4 generates natural language explanations
+
+### Matching Data Flow
+
+```
+1. Generate Students & Enhance Tutors
+   ↓
+2. Calculate Features for All Pairs
+   ↓
+3. Run ML Model Predictions
+   ↓
+4. Store Predictions in Database
+   ↓
+5. User Selects Student & Tutor
+   ↓
+6. Fetch Match Prediction
+   ↓
+7. Generate AI Explanation (on-demand)
+   ↓
+8. Display Match Details
+```
+
+### Feature Engineering Pattern
+
+**Mismatch Scores (Key Predictive Features):**
+- `pace_mismatch`: |student.preferred_pace - tutor.preferred_pace|
+- `style_mismatch`: Distance metric between teaching styles
+- `communication_mismatch`: |student.communication - tutor.communication|
+- `age_difference`: |student.age - tutor.age|
+
+**Compatibility Score:**
+- Weighted inverse of mismatch scores
+- Normalized to 0-1 scale
+- Higher score = better match
+
+### ML Model Pattern
+
+**Pre-calculation Strategy:**
+- Generate predictions for all student-tutor combinations upfront
+- Store in `match_predictions` table
+- Fast API responses (no real-time computation)
+- Update when preferences change
+
+**Risk Level Thresholds:**
+- Configurable thresholds (default: Low < 0.3, Medium 0.3-0.7, High ≥ 0.7)
+- Stored in environment variables for flexibility
+
+### AI Explanation Pattern
+
+**On-Demand Generation:**
+- Generate explanations when user requests match details
+- Cache similar explanations to reduce API calls
+- Use GPT-4 Turbo for cost efficiency
+- Fallback to rule-based explanation if API fails
+
+**Prompt Structure:**
+- Include student profile, tutor profile, match metrics
+- Request 2-3 sentence explanation
+- Highlight specific compatibility factors
+
+### Matching Dashboard Pattern
+
+**Two-Column Layout:**
+- Students (left) | Tutors (right)
+- Clickable cards for selection
+- Inline match detail panel when both selected
+- Visual indicators for risk levels (color-coded)
+
+**Visual Design:**
+- Risk badges: Green (low), Yellow (medium), Red (high)
+- Compatibility score: Progress bar (0-100%)
+- Mismatch indicators: Horizontal bars with severity
+- AI explanation: Highlighted card
+
+---
+
 ## Future Patterns (Post-MVP)
 
-- **AI Integration:** OpenAI API for pattern analysis
+- **AI Integration:** OpenAI API for pattern analysis ✅ (implemented in matching service)
 - **Predictive Models:** ML models for no-show prediction
 - **Real-Time Updates:** WebSocket connections
 - **Advanced Analytics:** Complex queries and aggregations

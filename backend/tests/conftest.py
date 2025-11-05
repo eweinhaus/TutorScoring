@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-from app.models import Base, Tutor, Session, Reschedule, TutorScore, EmailReport
+from app.models import Base, Tutor, Session, Reschedule, TutorScore, EmailReport, Student, MatchPrediction
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.types import TypeDecorator, CHAR
 from decimal import Decimal

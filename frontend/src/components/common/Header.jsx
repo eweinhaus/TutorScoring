@@ -43,6 +43,16 @@ function Header() {
             >
               Tutors
             </Link>
+            <Link
+              to="/matching"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/matching')
+                  ? 'bg-primary text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Matching
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -93,6 +103,17 @@ function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Tutors
+            </Link>
+            <Link
+              to="/matching"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive('/matching')
+                  ? 'bg-primary text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Matching
             </Link>
           </div>
         )}
