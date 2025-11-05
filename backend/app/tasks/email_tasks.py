@@ -51,7 +51,7 @@ def send_email_report(self, session_id: str):
         email_report = EmailReport(
             session_id=session_id,
             recipient_email=recipient_email,
-            sent_at=datetime.utcnow() if success else None,
+            sent_at=datetime.utcnow(),  # Always set timestamp, even for failures (audit trail)
             status="sent" if success else "failed",
             error_message=None
         )
@@ -85,7 +85,7 @@ def send_email_report(self, session_id: str):
                 email_report = EmailReport(
                     session_id=session_id,
                     recipient_email=recipient_email,
-                    sent_at=None,
+                    sent_at=datetime.utcnow(),  # Always set timestamp, even for failures (audit trail)
                     status="failed",
                     error_message=str(exc)
                 )

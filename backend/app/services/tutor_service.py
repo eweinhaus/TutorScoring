@@ -5,12 +5,15 @@ from typing import Optional, List, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func, and_
+import logging
 
 from app.models.tutor import Tutor
 from app.models.tutor_score import TutorScore
 from app.models.reschedule import Reschedule
 from app.models.session import Session as SessionModel
 from app.utils.cache import get_tutor_score, set_tutor_score
+
+logger = logging.getLogger(__name__)
 
 
 def get_tutors(
@@ -35,8 +38,9 @@ def get_tutors(
     Returns:
         Tuple of (list of tutors, total count)
     """
-    # Start with base query joining tutors and tutor_scores
-    query = db.query(Tutor).outerjoin(TutorScore)
+    # Start with base query - use outerjoin to include all tutors (with or without scores)
+    # Then use joinedload to eagerly load the relationship for efficient access
+    query = db.query(Tutor).outerjoin(TutorScore).options(joinedload(Tutor.tutor_score))
     
     # Apply risk status filter
     if risk_status == "high_risk":
@@ -65,7 +69,7 @@ def get_tutors(
         else:
             query = query.order_by(Tutor.name.desc())
     else:
-        # Default sorting
+        # Default sorting by reschedule_rate_30d
         query = query.order_by(TutorScore.reschedule_rate_30d.desc().nullslast())
     
     # Apply pagination

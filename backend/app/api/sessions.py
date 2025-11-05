@@ -57,6 +57,9 @@ async def create_session_endpoint(
         # Return 202 Accepted with session data
         return SessionResponse.model_validate(session)
         
+    except HTTPException:
+        # Re-raise HTTPException (validation errors) without modification
+        raise
     except ValueError as e:
         logger.error(f"Validation error creating session: {str(e)}")
         raise HTTPException(

@@ -77,11 +77,12 @@ def test_complete_session_flow(client, db_session, api_key):
         assert score is not None
         
         # 4. Verify tutor appears in list
-        response = client.get("/api/tutors")
+        # Use a large limit to ensure we get all tutors (including the one we just created)
+        response = client.get("/api/tutors?limit=1000")
         assert response.status_code == 200
         data = response.json()
         tutor_ids = [t["id"] for t in data["tutors"]]
-        assert str(tutor.id) in tutor_ids
+        assert str(tutor.id) in tutor_ids, f"Tutor {tutor.id} not found in {len(tutor_ids)} tutors. Total: {data.get('total', 'unknown')}"
 
 
 def test_session_with_reschedule_flow(client, db_session, api_key):

@@ -2,9 +2,13 @@
 FastAPI application entry point
 """
 import logging
+import os
+from typing import List
+
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.openapi.utils import get_openapi
 
 from app.api.routes import router
 from app.utils.logging_config import setup_logging
@@ -20,9 +24,25 @@ app = FastAPI(
 )
 
 # CORS configuration
+# Get allowed origins from environment or use defaults
+def get_allowed_origins() -> List[str]:
+    """Get allowed CORS origins from environment or defaults."""
+    origins_str = os.getenv("CORS_ORIGINS", "")
+    if origins_str:
+        # Split by comma and strip whitespace
+        origins = [origin.strip() for origin in origins_str.split(",")]
+    else:
+        # Default origins for development and production
+        origins = [
+            "http://localhost:3000",
+            "http://localhost:5173",  # Vite default port
+            "https://tutor-scoring-frontend.onrender.com",
+        ]
+    return origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,6 +50,45 @@ app.add_middleware(
 
 # Include API router
 app.include_router(router, prefix="/api")
+
+
+# Customize OpenAPI schema to include API key security
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add security scheme for API key
+    openapi_schema["components"]["securitySchemes"] = {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key for authentication. Get your API key from environment variables."
+        }
+    }
+    
+    # Add security requirement to endpoints that require authentication
+    # Check all paths and operations
+    for path, path_item in openapi_schema.get("paths", {}).items():
+        for method, operation in path_item.items():
+            if method in ["get", "post", "put", "delete", "patch"]:
+                # Mark endpoints that require auth (sessions, tutors)
+                # Skip health endpoint
+                if ("/sessions" in path or "/tutors" in path) and "/health" not in path:
+                    operation["security"] = [{"ApiKeyAuth": []}]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 
 # Global exception handlers

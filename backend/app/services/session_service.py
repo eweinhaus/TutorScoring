@@ -26,9 +26,8 @@ def create_session(session_data: SessionCreate, db: Session) -> SessionModel:
         ValueError: If session_id is duplicate or tutor_id is invalid
         IntegrityError: If database constraint is violated
     """
-    # Validate reschedule_info if status is 'rescheduled'
-    if session_data.status == 'rescheduled' and not session_data.reschedule_info:
-        raise ValueError("reschedule_info is required when status is 'rescheduled'")
+    # Note: Validation of reschedule_info is handled in API layer (sessions.py)
+    # This service layer focuses on business logic only
     
     # Check if session with this ID already exists
     existing_session = db.query(SessionModel).filter(

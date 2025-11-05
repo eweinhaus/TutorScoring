@@ -14,11 +14,12 @@ from app.models.reschedule import Reschedule
 
 def test_get_tutors_all(db_session, sample_tutor, sample_tutor_score):
     """Test getting all tutors."""
-    tutors, total = get_tutors(db_session, risk_status="all")
+    # Use a large limit to ensure we get all tutors (including the sample)
+    tutors, total = get_tutors(db_session, risk_status="all", limit=1000)
     
     assert total >= 1
     assert len(tutors) >= 1
-    assert any(t.id == sample_tutor.id for t in tutors)
+    assert any(t.id == sample_tutor.id for t in tutors), f"Sample tutor {sample_tutor.id} not found in {len(tutors)} tutors. Total: {total}"
 
 
 def test_get_tutors_high_risk_filter(db_session, sample_tutor):
