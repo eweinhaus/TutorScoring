@@ -16,8 +16,8 @@ sendgrid==6.11.0
 
 # Environment & Config
 python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
 
 # Utilities
 python-dateutil==2.8.2
