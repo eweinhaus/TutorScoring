@@ -35,10 +35,8 @@ fi
 
 echo -e "${GREEN}✅ API key retrieved (length: ${#API_KEY})${NC}"
 
-# Get ALB DNS for API URL
-ALB_DNS="tutor-scoring-alb-2067881445.us-east-1.elb.amazonaws.com"
-API_URL="http://${ALB_DNS}"
-
+# Use relative URLs in production so frontend hits CloudFront domain
+API_URL=""
 # Navigate to frontend directory
 FRONTEND_DIR="../../frontend"
 cd "$FRONTEND_DIR"
