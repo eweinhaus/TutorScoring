@@ -3,7 +3,24 @@
  */
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'
+// Always use relative URLs in production to ensure same-origin requests
+// This works with CloudFront which proxies /api/* to ALB
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  
+  // In production, always use relative URL (same domain as frontend)
+  // This ensures all requests go through HTTPS CloudFront
+  if (import.meta.env.PROD) {
+    // Use empty string for relative URLs, or window.location.origin
+    return ''  // Empty string means relative to current origin
+  }
+  
+  return 'http://localhost:8001'
+}
+
+const API_URL = getApiUrl()
 const API_KEY = import.meta.env.VITE_API_KEY || ''
 
 // Create axios instance

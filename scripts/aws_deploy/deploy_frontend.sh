@@ -29,6 +29,9 @@ fi
 
 # Build frontend
 cd ../../frontend
+# Set VITE_API_URL to ALB
+# Note: Change to https:// if your ALB has HTTPS listener configured
+# If CloudFront proxies /api/* to ALB, you can comment this out to use relative URLs
 echo "VITE_API_URL=http://${ALB_DNS}" > .env.production
 if [ -n "$API_KEY" ]; then
     echo "VITE_API_KEY=${API_KEY}" >> .env.production

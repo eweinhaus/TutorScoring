@@ -1,7 +1,7 @@
 """
 Matching service API endpoints.
 """
-from fastapi import APIRouter, HTTPException, Query, Depends, Path, status
+from fastapi import APIRouter, HTTPException, Query, Depends, Path, Body, status
 from typing import Optional
 from uuid import UUID
 import logging
