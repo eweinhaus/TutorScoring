@@ -5,7 +5,7 @@ uvicorn[standard]==0.24.0
 # Database
 sqlalchemy>=2.0.36
 alembic>=1.14.0
-psycopg2-binary==2.9.9
+psycopg2-binary>=2.9.10
 
 # Task Queue
 celery==5.3.4
