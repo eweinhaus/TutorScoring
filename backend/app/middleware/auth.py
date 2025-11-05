@@ -68,13 +68,23 @@ def get_api_key(api_key: str = Depends(API_KEY_HEADER)) -> str:
     expected_api_key = os.getenv("API_KEY")
     
     if not expected_api_key:
+        logger.debug("API_KEY not configured - allowing request without authentication")
         return "no-auth"  # Allow if API_KEY not configured
     
-    if not api_key or api_key != expected_api_key:
+    if not api_key:
+        logger.warning("API key missing from request headers")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key"
+            detail="API key is required. Provide X-API-Key header with your API key."
         )
     
+    if api_key != expected_api_key:
+        logger.warning(f"Invalid API key provided (first 4 chars: {api_key[:4] if len(api_key) > 4 else 'N/A'}...)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key"
+        )
+    
+    logger.debug("API key validated successfully")
     return api_key
 

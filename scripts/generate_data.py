@@ -14,6 +14,7 @@ Usage:
 import argparse
 import sys
 import os
+import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Dict, Optional
@@ -52,9 +53,9 @@ SessionLocal = sessionmaker(bind=engine)
 
 # Configuration constants
 RISK_DISTRIBUTION = {
-    'low': 0.60,      # 0-10% reschedule rate
-    'medium': 0.25,   # 10-20% reschedule rate
-    'high': 0.15      # >20% reschedule rate
+    'low': 0.70,      # 0-10% reschedule rate (70% low risk)
+    'medium': 0.20,   # 10-20% reschedule rate (20% warning/medium risk)
+    'high': 0.10      # >20% reschedule rate (10% high risk)
 }
 
 SESSION_STATUS_DISTRIBUTION = {
@@ -166,11 +167,12 @@ def generate_tutors(db: SessionLocal, count: int, start_date: datetime) -> List[
         days_ago = random.randint(0, 180)
         created_at = start_date - timedelta(days=days_ago)
         
-        # Generate unique name (avoid exact duplicates)
+        # Generate unique name without titles (avoid "Mr", "Dr", etc.)
         max_attempts = 50
         name = None
         for _ in range(max_attempts):
-            candidate = fake.name()
+            # Use first_name + last_name to avoid titles like "Mr", "Dr", etc.
+            candidate = f"{fake.first_name()} {fake.last_name()}"
             if candidate not in used_names:
                 name = candidate
                 used_names.add(name)
@@ -178,7 +180,7 @@ def generate_tutors(db: SessionLocal, count: int, start_date: datetime) -> List[
         
         if name is None:
             # Fallback: add suffix to make unique
-            name = f"{fake.name()} {random.randint(1, 999)}"
+            name = f"{fake.first_name()} {fake.last_name()} {random.randint(1, 999)}"
             used_names.add(name)
         
         # Generate matching email (90% have email, 10% don't)
@@ -280,23 +282,42 @@ def generate_sessions(db: SessionLocal, tutors: List[Tutor], count: int, days: i
     for tutor in tutors:
         tutor_sessions_count = total_sessions_by_tutor.get(tutor.id, 0)
         
-        for _ in range(tutor_sessions_count):
-            # Generate scheduled time with realistic patterns
-            # More sessions on weekdays (70%)
-            if random.random() < 0.70:
-                # Weekday
-                day_offset = random.randint(0, days - 1)
-                scheduled_date = start_date + timedelta(days=day_offset)
-                # Ensure it's a weekday (Monday=0, Sunday=6)
-                while scheduled_date.weekday() >= 5:
-                    scheduled_date += timedelta(days=1)
+        # Generate dates evenly distributed across the time period
+        # Create a list of potential dates for this tutor's sessions
+        date_offsets = []
+        if tutor_sessions_count > 0:
+            if tutor_sessions_count == 1:
+                # Single session - place it randomly
+                date_offsets = [random.randint(0, days - 1)]
             else:
-                # Weekend
-                day_offset = random.randint(0, days - 1)
-                scheduled_date = start_date + timedelta(days=day_offset)
-                # Ensure it's a weekend
-                while scheduled_date.weekday() < 5:
-                    scheduled_date += timedelta(days=1)
+                # Multiple sessions - spread them evenly
+                # Use a combination of evenly spaced and random dates
+                for i in range(tutor_sessions_count):
+                    # Mix of evenly spaced (70%) and random (30%) for natural variation
+                    if random.random() < 0.70:
+                        # Evenly spaced across the period
+                        offset = int((i / max(1, tutor_sessions_count - 1)) * (days - 1))
+                        # Add some jitter (±2 days) to avoid exact spacing
+                        offset += random.randint(-2, 2)
+                        offset = max(0, min(days - 1, offset))  # Clamp to valid range
+                    else:
+                        # Random placement
+                        offset = random.randint(0, days - 1)
+                    date_offsets.append(offset)
+            
+            # Sort dates to ensure chronological order
+            date_offsets.sort()
+        
+        for session_num in range(tutor_sessions_count):
+            # Get the date offset for this session
+            day_offset = date_offsets[session_num]
+            scheduled_date = start_date + timedelta(days=day_offset)
+            
+            # Ensure date is within bounds (should be, but double-check)
+            if scheduled_date < start_date:
+                scheduled_date = start_date
+            if scheduled_date > end_date:
+                scheduled_date = end_date
             
             # Peak hours: 3-8 PM (60% of sessions)
             if random.random() < 0.60:
@@ -318,18 +339,61 @@ def generate_sessions(db: SessionLocal, tutors: List[Tutor], count: int, days: i
             # 60% unique students, 30% repeat customers, 10% frequent repeaters
             student_pool_size = max(100, int(count * 0.6))  # Pool of unique students
             if not hasattr(generate_sessions, '_student_ids'):
-                # Initialize student ID pool
+                # Initialize student ID pool with realistic identifiers
                 generate_sessions._student_ids = []
+                
+                # Generate realistic student identifiers using multiple formats
                 for j in range(student_pool_size):
-                    # Mix of formats: "STU-12345", "student_12345", "S12345"
-                    format_type = random.choice(['STU-', 'student_', 'S'])
-                    num = random.randint(10000, 99999)
-                    generate_sessions._student_ids.append(f"{format_type}{num}")
-                # Add some frequent repeaters
+                    # Use mix of realistic formats:
+                    # 1. UUIDs (40% - most common in modern systems)
+                    # 2. Email-based (30% - student emails)
+                    # 3. Name-based codes (20% - firstname.lastname format)
+                    # 4. Alphanumeric codes (10% - short codes)
+                    format_choice = random.random()
+                    
+                    if format_choice < 0.40:
+                        # UUID format (most realistic for modern platforms)
+                        student_id = str(uuid.uuid4())
+                    elif format_choice < 0.70:
+                        # Email-based identifier
+                        student_name = fake.first_name().lower()
+                        last_name = fake.last_name().lower()
+                        student_id = f"{student_name}.{last_name}@student.edu"
+                    elif format_choice < 0.90:
+                        # Name-based code (firstname.lastname.studentid)
+                        first_name = fake.first_name().lower()
+                        last_name = fake.last_name().lower()
+                        student_num = random.randint(1000, 9999)
+                        student_id = f"{first_name}.{last_name}.{student_num}"
+                    else:
+                        # Short alphanumeric code
+                        letters = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=3))
+                        numbers = random.randint(100000, 999999)
+                        student_id = f"{letters}{numbers}"
+                    
+                    generate_sessions._student_ids.append(student_id)
+                
+                # Add some frequent repeaters (same format distribution)
                 for _ in range(int(student_pool_size * 0.1)):
-                    format_type = random.choice(['STU-', 'student_', 'S'])
-                    num = random.randint(10000, 99999)
-                    generate_sessions._student_ids.append(f"{format_type}{num}")
+                    format_choice = random.random()
+                    
+                    if format_choice < 0.40:
+                        student_id = str(uuid.uuid4())
+                    elif format_choice < 0.70:
+                        student_name = fake.first_name().lower()
+                        last_name = fake.last_name().lower()
+                        student_id = f"{student_name}.{last_name}@student.edu"
+                    elif format_choice < 0.90:
+                        first_name = fake.first_name().lower()
+                        last_name = fake.last_name().lower()
+                        student_num = random.randint(1000, 9999)
+                        student_id = f"{first_name}.{last_name}.{student_num}"
+                    else:
+                        letters = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=3))
+                        numbers = random.randint(100000, 999999)
+                        student_id = f"{letters}{numbers}"
+                    
+                    generate_sessions._student_ids.append(student_id)
             
             rand = random.random()
             if rand < 0.60:

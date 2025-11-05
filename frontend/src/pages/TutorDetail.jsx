@@ -121,7 +121,29 @@ function TutorDetail() {
   }
 
   if (error) {
-    return <ErrorMessage error={error} onRetry={refetch} />
+    // Check if it's a 404 error
+    const isNotFound = error.message && (error.message.includes('not found') || error.message.includes('404'))
+    
+    return (
+      <div className="card">
+        <h2 className="text-xl font-semibold mb-4">Tutor Not Found</h2>
+        <p className="text-gray-600 mb-4">
+          {isNotFound 
+            ? "The tutor you're looking for doesn't exist or has been removed. This may be due to data regeneration."
+            : "Unable to load tutor information. Please try again."}
+        </p>
+        <div className="flex gap-4">
+          <Link to="/tutors" className="btn btn-primary">
+            Back to Tutor List
+          </Link>
+          {!isNotFound && (
+            <button onClick={refetch} className="btn btn-secondary">
+              Retry
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   if (!tutor) {

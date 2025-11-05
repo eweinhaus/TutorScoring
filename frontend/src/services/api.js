@@ -1,7 +1,33 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'
+// Use CloudFront URL for API (which proxies to ALB)
+// This ensures all requests go through HTTPS
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  
+  // In production, use CloudFront URL (same domain as frontend)
+  // CloudFront will proxy /api/* requests to ALB
+  if (import.meta.env.PROD) {
+    // Use relative URL or same CloudFront domain
+    return window.location.origin
+  }
+  
+  return 'http://localhost:8001'
+}
+
+const API_BASE_URL = getApiUrl()
 const API_KEY = import.meta.env.VITE_API_KEY
+
+// Log API key status in development (without exposing the actual key)
+if (import.meta.env.DEV) {
+  if (API_KEY) {
+    console.log('[API] API key configured (length:', API_KEY.length, ')')
+  } else {
+    console.warn('[API] VITE_API_KEY not set - API key header will not be sent')
+  }
+}
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -16,7 +42,14 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (import.meta.env.DEV) {
-      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data)
+      const hasApiKey = config.headers['X-API-Key'] || config.headers['x-api-key']
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
+        hasApiKey: !!hasApiKey,
+        ...(config.params || config.data ? { data: config.params || config.data } : {})
+      })
+      if (!hasApiKey && !API_KEY) {
+        console.warn(`[API] Warning: No API key header will be sent. Set VITE_API_KEY environment variable.`)
+      }
     }
     return config
   },
@@ -43,7 +76,11 @@ apiClient.interceptors.response.use(
 
     switch (status) {
       case 401:
-        error.message = 'Unauthorized. Please check your API key.'
+        if (data?.detail) {
+          error.message = data.detail
+        } else {
+          error.message = 'Unauthorized. Please check your API key. Make sure VITE_API_KEY is set in your environment variables.'
+        }
         break
       case 404:
         error.message = data?.detail || 'Resource not found.'
@@ -111,4 +148,3 @@ export const createSession = async (sessionData) => {
 }
 
 export default apiClient
-

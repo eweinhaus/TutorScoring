@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Layout from './components/common/Layout'
 import LoadingSpinner from './components/common/LoadingSpinner'
 
@@ -48,6 +48,20 @@ function App() {
                 <Suspense fallback={<LoadingSpinner message="Loading tutor details..." />}>
                   <TutorDetail />
                 </Suspense>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <div className="card">
+                  <h2 className="text-xl font-semibold mb-4">Page Not Found</h2>
+                  <p className="text-gray-600 mb-4">
+                    The page you're looking for doesn't exist.
+                  </p>
+                  <Link to="/" className="btn btn-primary">
+                    Go to Dashboard
+                  </Link>
+                </div>
               }
             />
           </Route>

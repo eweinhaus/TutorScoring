@@ -35,3 +35,7 @@ flake8==6.1.0
 mypy==1.7.0
 faker==20.0.0
 
+# Performance Testing Tools
+psutil==5.9.6
+requests==2.31.0
+

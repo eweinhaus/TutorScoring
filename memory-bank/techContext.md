@@ -372,28 +372,89 @@ npm test  # If configured
 
 ## Deployment
 
-### Render Deployment
+### Render Deployment (Partial - Attempted)
 
-**Web Service:**
-- Build: `pip install -r requirements.txt`
-- Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+**Status:** Partially deployed - API, Worker, Frontend, and Database are LIVE. Redis connection pending.
 
-**Background Worker:**
-- Build: `pip install -r requirements.txt`
-- Start: `celery -A app.tasks.celery_app worker --loglevel=info`
+**Services Deployed:**
+- ✅ **Web Service (API):** `tutor-scoring-api` - LIVE on https://tutor-scoring-api.onrender.com
+- ✅ **Background Worker:** `tutor-scoring-worker` - LIVE (but Redis connection failing)
+- ✅ **Static Site (Frontend):** `tutor-scoring-frontend` - LIVE on https://tutor-scoring-frontend.onrender.com
+- ✅ **PostgreSQL:** `tutor-scoring-db` - LIVE, migrations completed
+- ⚠️ **Redis (Key Value):** `tutor-scoring-redis` - Created, but connection strings not linked
 
-**Static Site (Frontend):**
-- Build: `cd frontend && npm install && npm run build`
-- Publish: `frontend/dist`
+**Build Commands:**
+- Web Service: `cd backend && pip install -r requirements.txt`
+- Start Command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Worker: `cd backend && celery -A app.tasks.celery_app worker --loglevel=info`
+- Frontend: `cd frontend && npm install && npm run build`
 
-### Environment Variables (Render)
+**Python Version Compatibility:**
+- Render uses Python 3.13 by default (not configurable via runtime.txt in backend/)
+- Required dependency upgrades for Python 3.13:
+  - `pydantic>=2.9.0` (pre-built wheels available)
+  - `pydantic-settings>=2.6.0`
+  - `sqlalchemy>=2.0.36` (Python 3.13 compatible)
+  - `alembic>=1.14.0`
+  - `psycopg2-binary>=2.9.10` (compiled for Python 3.13)
 
-Set via Render dashboard:
-- Database URL (auto-provided from PostgreSQL service)
-- Redis URL (auto-provided from Redis service)
-- Email service credentials
-- API keys
-- Admin email
+**Environment Variables (Render):**
+- Set via Render dashboard (not MCP API for sensitive keys):
+  - `DATABASE_URL` - Auto-linked from PostgreSQL service
+  - `REDIS_URL` - Manual linking required (Key Value service internal connection string)
+  - `CELERY_BROKER_URL` - Manual linking required
+  - `CELERY_RESULT_BACKEND` - Manual linking required
+  - `SENDGRID_API_KEY` - Manual entry (sensitive)
+  - `API_KEY` - Manual entry (sensitive)
+  - `SECRET_KEY` - Manual entry (sensitive)
+  - `ADMIN_EMAIL` - Manual entry
+  - `CORS_ORIGINS` - Comma-separated list of allowed origins
+
+**Known Issues:**
+- Redis connection strings cannot be programmatically linked via MCP API
+- Internal Redis hostname (`red-*`) not resolving from services
+- Manual dashboard linking required for Redis connection strings
+- Test data seeding script needs DATABASE_URL from Render environment
+
+**Lessons Learned:**
+1. Render's Python 3.13 requires updated dependencies (pre-built wheels)
+2. Redis Key Value service requires manual connection string linking in dashboard
+3. CORS configuration should be dynamic from environment variables
+4. Database migrations work seamlessly on Render PostgreSQL
+5. Blueprint deployment creates all services but connection strings need manual configuration
+
+### AWS Deployment (Planned)
+
+**Infrastructure:**
+- **PostgreSQL:** AWS RDS (managed service, Multi-AZ for production)
+- **Redis:** AWS ElastiCache (managed service, Redis 7+)
+- **API/Worker:** AWS ECS Fargate or EC2 (containerized deployment)
+- **Frontend:** S3 + CloudFront (static hosting with CDN)
+
+**Network Configuration:**
+- VPC with public and private subnets
+- Security groups for service-to-service communication
+- NAT Gateway for outbound internet access
+- Application Load Balancer for API service
+
+**Security:**
+- AWS Secrets Manager for sensitive environment variables
+- IAM roles for service permissions
+- SSL/TLS certificates via ACM
+- WAF rules for API protection
+
+**Deployment Strategy:**
+- Use same application code (no changes needed)
+- Update environment variables for AWS services
+- Configure VPC networking for internal service communication
+- Set up CloudWatch for monitoring and logging
+- Use AWS CodePipeline for CI/CD (optional)
+
+**Migration Path:**
+- Same FastAPI application structure
+- Same database schema (Alembic migrations)
+- Same Celery worker configuration
+- Update connection strings and environment variables
 
 ---
 

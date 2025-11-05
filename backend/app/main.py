@@ -51,6 +51,16 @@ app.add_middleware(
 # Include API router
 app.include_router(router, prefix="/api")
 
+# Catch-all route for unknown API endpoints (must be after API router)
+@app.get("/api/{path:path}")
+async def catch_all_api(request: Request, path: str):
+    """Catch-all route for unknown API endpoints"""
+    logger.warning(f"Unknown API endpoint requested: {request.url.path}")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"API endpoint not found: /api/{path}. Available endpoints: /api/health, /api/tutors, /api/sessions"
+    )
+
 
 # Customize OpenAPI schema to include API key security
 def custom_openapi():

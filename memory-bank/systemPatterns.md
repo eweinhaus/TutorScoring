@@ -351,27 +351,56 @@ components/
 
 ## Deployment Patterns
 
-### Render Deployment
+### Render Deployment (Partial - Attempted)
 
 **Services:**
-- Web Service: FastAPI application
-- Background Worker: Celery worker
-- PostgreSQL: Managed database
-- Redis: Managed Redis instance
-- Static Site: Frontend dashboard
+- Web Service: FastAPI application ✅ LIVE
+- Background Worker: Celery worker ✅ LIVE (Redis connection pending)
+- PostgreSQL: Managed database ✅ LIVE, migrations run
+- Redis: Managed Redis instance (Key Value) ⚠️ Created, connection strings need manual linking
+- Static Site: Frontend dashboard ✅ LIVE
 
 **Configuration:**
-- Environment variables from Render dashboard
+- Environment variables from Render dashboard (manual for sensitive keys)
 - Build commands in render.yaml
 - Health checks for monitoring
+- CORS configured dynamically from environment variables
+
+**Deployment Notes:**
+- Python 3.13 compatibility required (dependencies upgraded)
+- Redis connection strings must be manually linked in dashboard (MCP API limitation)
+- Database migrations run successfully via Render Shell
+- Blueprint deployment creates all services but connection configuration is manual
 
 ### Migration Pattern (Render → AWS)
 
-- Same architecture, swap infrastructure
-- Render Web Service → AWS ECS/EC2
-- Render PostgreSQL → AWS RDS
-- Render Workers → AWS ECS Tasks
-- Render Redis → AWS ElastiCache
+**Infrastructure Mapping:**
+- Render Web Service → AWS ECS Fargate or EC2
+- Render PostgreSQL → AWS RDS (Multi-AZ for production)
+- Render Workers → AWS ECS Tasks or EC2
+- Render Redis (Key Value) → AWS ElastiCache for Redis
+- Render Static Site → S3 + CloudFront
+
+**Architecture Preservation:**
+- Same FastAPI application code (no changes)
+- Same database schema (Alembic migrations reusable)
+- Same Celery worker configuration
+- Same environment variable structure
+- Update connection strings and service endpoints
+
+**Network Architecture:**
+- VPC with public/private subnets
+- Security groups for service isolation
+- Internal service communication via private subnets
+- NAT Gateway for outbound access
+- Application Load Balancer for public API access
+
+**Security Enhancements:**
+- AWS Secrets Manager for sensitive variables (vs. Render dashboard)
+- IAM roles for service permissions
+- SSL/TLS via ACM
+- VPC security groups for network isolation
+- CloudWatch for monitoring and logging
 
 ---
 
