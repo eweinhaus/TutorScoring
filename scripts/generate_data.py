@@ -36,8 +36,10 @@ from app.models import (
 # Load environment variables from backend/.env
 load_dotenv(os.path.join(backend_dir, '.env'))
 
-# Initialize Faker
-fake = Faker()
+# Initialize Faker with multiple locales for more realistic names
+fake = Faker(['en_US', 'en_GB', 'en_CA', 'en_AU'])
+# Set seed for reproducibility (but different each run)
+fake.seed_instance(random.randint(0, 999999))
 
 # Database connection
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -77,6 +79,11 @@ RESCHEDULE_REASONS = [
     ('Family issue', 'family'),
     ('Technical issues', 'technical'),
     ('Health concern', 'health'),
+    ('Work commitment', 'work'),
+    ('Transportation issue', 'transportation'),
+    ('Childcare conflict', 'childcare'),
+    ('Weather-related', 'weather'),
+    ('Student requested', 'student_request'),
 ]
 
 RISK_THRESHOLD = Decimal('15.00')
@@ -93,9 +100,47 @@ def choose_weighted(options: Dict[str, float]) -> str:
     return list(options.keys())[-1]
 
 
+def generate_email_from_name(name: str) -> str:
+    """
+    Generate a realistic email address from a tutor's name.
+    
+    Examples:
+        "John Smith" -> "john.smith@tutoring.com"
+        "Sarah Johnson" -> "sarah.johnson@tutoring.com"
+        "Michael O'Brien" -> "michael.obrien@tutoring.com"
+    """
+    # Normalize name: lowercase, remove apostrophes, replace spaces/hyphens with dots
+    normalized = name.lower()
+    normalized = normalized.replace("'", "").replace("'", "")
+    normalized = normalized.replace("-", ".").replace(" ", ".")
+    # Remove any double dots
+    while ".." in normalized:
+        normalized = normalized.replace("..", ".")
+    
+    # Email domains that look realistic
+    domains = [
+        'tutoring.com',
+        'teachonline.com',
+        'educonnect.com',
+        'tutorhub.com',
+        'learnwith.me',
+        'gmail.com',  # Some use personal email
+        'yahoo.com',
+        'outlook.com'
+    ]
+    
+    # 80% use professional domains, 20% personal
+    if random.random() < 0.80:
+        domain = random.choice(domains[:5])
+    else:
+        domain = random.choice(domains[5:])
+    
+    return f"{normalized}@{domain}"
+
+
 def generate_tutors(db: SessionLocal, count: int, start_date: datetime) -> List[Tutor]:
     """
-    Generate tutor data with varied risk profiles.
+    Generate tutor data with varied risk profiles and realistic names/emails.
     
     Args:
         db: Database session
@@ -107,21 +152,56 @@ def generate_tutors(db: SessionLocal, count: int, start_date: datetime) -> List[
     """
     tutors = []
     risk_categories = []
+    used_names = set()  # Track names to avoid exact duplicates
+    used_emails = set()  # Track emails to avoid duplicates
     
     # Assign risk categories based on distribution
     for i in range(count):
         risk_cat = choose_weighted(RISK_DISTRIBUTION)
         risk_categories.append(risk_cat)
     
-    print(f"Generating {count} tutors...")
+    print(f"Generating {count} tutors with realistic names and emails...")
     for i in range(count):
         # Creation date varied over past 6 months
         days_ago = random.randint(0, 180)
         created_at = start_date - timedelta(days=days_ago)
         
+        # Generate unique name (avoid exact duplicates)
+        max_attempts = 50
+        name = None
+        for _ in range(max_attempts):
+            candidate = fake.name()
+            if candidate not in used_names:
+                name = candidate
+                used_names.add(name)
+                break
+        
+        if name is None:
+            # Fallback: add suffix to make unique
+            name = f"{fake.name()} {random.randint(1, 999)}"
+            used_names.add(name)
+        
+        # Generate matching email (90% have email, 10% don't)
+        email = None
+        if random.random() < 0.90:
+            max_email_attempts = 50
+            for _ in range(max_email_attempts):
+                candidate_email = generate_email_from_name(name)
+                if candidate_email not in used_emails:
+                    email = candidate_email
+                    used_emails.add(email)
+                    break
+            
+            if email is None:
+                # Fallback: add number to make unique
+                base_email = generate_email_from_name(name)
+                username, domain = base_email.split('@')
+                email = f"{username}{random.randint(1, 999)}@{domain}"
+                used_emails.add(email)
+        
         tutor = Tutor(
-            name=fake.name(),
-            email=fake.email() if random.random() < 0.70 else None,  # 70% have email
+            name=name,
+            email=email,
             is_active=random.random() < 0.90,  # 90% active
             created_at=created_at,
             updated_at=created_at
@@ -135,7 +215,7 @@ def generate_tutors(db: SessionLocal, count: int, start_date: datetime) -> List[
             db.flush()
     
     db.commit()
-    print(f"✓ Created {len(tutors)} tutors")
+    print(f"✓ Created {len(tutors)} tutors with unique names and matching emails")
     
     # Store risk category for later use
     for tutor, risk_cat in zip(tutors, risk_categories):
@@ -234,12 +314,33 @@ def generate_sessions(db: SessionLocal, tutors: List[Tutor], count: int, days: i
             # Generate status
             status = choose_weighted(SESSION_STATUS_DISTRIBUTION)
             
-            # Generate student ID (80% unique, 20% repeat)
-            if random.random() < 0.80:
-                student_id = f"student_{random.randint(1000, 9999)}"
+            # Generate student ID with realistic patterns
+            # 60% unique students, 30% repeat customers, 10% frequent repeaters
+            student_pool_size = max(100, int(count * 0.6))  # Pool of unique students
+            if not hasattr(generate_sessions, '_student_ids'):
+                # Initialize student ID pool
+                generate_sessions._student_ids = []
+                for j in range(student_pool_size):
+                    # Mix of formats: "STU-12345", "student_12345", "S12345"
+                    format_type = random.choice(['STU-', 'student_', 'S'])
+                    num = random.randint(10000, 99999)
+                    generate_sessions._student_ids.append(f"{format_type}{num}")
+                # Add some frequent repeaters
+                for _ in range(int(student_pool_size * 0.1)):
+                    format_type = random.choice(['STU-', 'student_', 'S'])
+                    num = random.randint(10000, 99999)
+                    generate_sessions._student_ids.append(f"{format_type}{num}")
+            
+            rand = random.random()
+            if rand < 0.60:
+                # New student - pick from pool
+                student_id = random.choice(generate_sessions._student_ids[:student_pool_size])
+            elif rand < 0.90:
+                # Repeat customer - pick from existing (weighted toward frequent repeaters)
+                student_id = random.choice(generate_sessions._student_ids)
             else:
-                # Repeat customer
-                student_id = f"student_{random.randint(1000, 9999)}"
+                # Frequent repeater - pick from last 10% of pool
+                student_id = random.choice(generate_sessions._student_ids[-int(student_pool_size * 0.1):])
             
             completed_time = None
             duration_minutes = None
