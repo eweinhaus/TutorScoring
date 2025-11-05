@@ -3,7 +3,7 @@ Main API router that aggregates all sub-routers.
 """
 from fastapi import APIRouter
 
-from app.api import health, sessions, tutors
+from app.api import health, sessions, tutors, matching
 
 # Create main router
 router = APIRouter()
@@ -12,4 +12,5 @@ router = APIRouter()
 router.include_router(health.router, tags=["health"])
 router.include_router(sessions.router, tags=["sessions"])
 router.include_router(tutors.router, tags=["tutors"])
+router.include_router(matching.router, tags=["matching"])
 

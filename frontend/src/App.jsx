@@ -8,6 +8,7 @@ import LoadingSpinner from './components/common/LoadingSpinner'
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const TutorList = lazy(() => import('./pages/TutorList'))
 const TutorDetail = lazy(() => import('./pages/TutorDetail'))
+const MatchingDashboard = lazy(() => import('./pages/MatchingDashboard'))
 
 // Create QueryClient instance outside component to avoid recreating on re-renders
 const queryClient = new QueryClient({
@@ -47,6 +48,14 @@ function App() {
               element={
                 <Suspense fallback={<LoadingSpinner message="Loading tutor details..." />}>
                   <TutorDetail />
+                </Suspense>
+              }
+            />
+            <Route
+              path="matching"
+              element={
+                <Suspense fallback={<LoadingSpinner message="Loading matching dashboard..." />}>
+                  <MatchingDashboard />
                 </Suspense>
               }
             />

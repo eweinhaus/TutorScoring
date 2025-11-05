@@ -100,6 +100,18 @@ Dashboard Displays → Admin Views → Takes Action
 
 **Impact:** Administrators can intervene before issues escalate.
 
+### Problem 4: Poor First Session Experiences (Matching Service)
+
+**Problem:** 24% of churners fail at first session experiences. Poor matches between tutors and students lead to immediate churn.
+
+**Solution:**
+- ML model predicts churn risk for tutor-student pairs before first sessions
+- Interactive matching dashboard for exploring matches
+- AI-powered explanations of match quality
+- Pre-calculated predictions for fast decision-making
+
+**Impact:** Administrators can identify high-risk matches before first sessions and make better matching decisions.
+
 ---
 
 ## User Experience Goals

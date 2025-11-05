@@ -2,7 +2,8 @@
 Tutor model representing tutor profiles.
 """
 from typing import TYPE_CHECKING, List, Optional
-from sqlalchemy import Column, String, Boolean, Index
+from sqlalchemy import Column, String, Boolean, Integer, Numeric, Index
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
 from app.models.base import BaseModel
@@ -10,6 +11,7 @@ from app.models.base import BaseModel
 if TYPE_CHECKING:
     from app.models.session import Session
     from app.models.tutor_score import TutorScore
+    from app.models.match_prediction import MatchPrediction
 
 
 class Tutor(BaseModel):
@@ -26,6 +28,17 @@ class Tutor(BaseModel):
     email = Column(String(255), unique=True, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     
+    # Matching preferences (nullable for backward compatibility)
+    age = Column(Integer, nullable=True)
+    sex = Column(String(10), nullable=True)  # 'male', 'female', 'other', or None
+    experience_years = Column(Integer, nullable=True)  # Years of tutoring experience
+    teaching_style = Column(String(50), nullable=True)  # e.g., 'structured', 'flexible', 'interactive'
+    preferred_pace = Column(Integer, nullable=True)  # 1-5 scale (1=slow, 5=fast)
+    communication_style = Column(Integer, nullable=True)  # 1-5 scale (1=formal, 5=casual)
+    confidence_level = Column(Integer, nullable=True)  # 1-5 scale (1=low, 5=high)
+    preferred_student_level = Column(String(50), nullable=True)  # e.g., 'beginner', 'intermediate', 'advanced'
+    preferences_json = Column(JSON, nullable=True)  # Additional flexible preferences
+    
     # Relationships
     sessions = relationship(
         'Session',
@@ -36,6 +49,11 @@ class Tutor(BaseModel):
         'TutorScore',
         back_populates='tutor',
         uselist=False
+    )
+    match_predictions = relationship(
+        'MatchPrediction',
+        back_populates='tutor',
+        cascade='all, delete-orphan'
     )
     
     # Indexes

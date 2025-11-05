@@ -1,8 +1,8 @@
 # Active Context
 ## Tutor Quality Scoring System
 
-**Last Updated:** Render Deployment Attempt - Partial Success  
-**Current Focus:** Deployment Phase - Render partially deployed, AWS deployment planned for tomorrow
+**Last Updated:** Matching Service Planning Complete  
+**Current Focus:** Matching Service Planning Complete, Ready for Implementation
 
 ---
 
@@ -18,54 +18,137 @@ All planning documents have been created and organized:
   - `planning/PRDs/PRD_Data_Foundation.md` - Database and models
   - `planning/PRDs/PRD_Backend_Services.md` - API and processing
   - `planning/PRDs/PRD_Frontend_Dashboard.md` - React dashboard
-- **Architecture:** `planning/architecture/architecture.mmd` - System diagram
+  - `planning/PRDs/PRD_Matching_Service.md` - Tutor-Student Matching Service (NEW)
+- **Architecture:** `planning/architecture/architecture.mmd` - System diagram (updated with matching service)
 - **Roadmap:** `planning/roadmap.md` - Future phases and evolution
+- **Task Lists:**
+  - `planning/tasks/task_list_matching_service.md` - Matching service implementation tasks (NEW)
 
 ### Implementation Phase: 🚀 IN PROGRESS
 
-### Deployment Phase: ⚠️ PARTIAL (Render Attempt)
-**Status:** Partially deployed to Render - database migrations completed, Redis connection pending  
-**Next Step:** Deploy to AWS tomorrow with full infrastructure setup
+### Matching Service Phase: ✅ COMPLETE
+**Status:** Fully implemented and ready for testing  
+**Priority:** High (Addresses 24% of churners with poor first session experiences)
 
-**Completed:**
-- ✅ Render services created via blueprint (API, Worker, Frontend, PostgreSQL, Redis)
-- ✅ Python 3.13 compatibility fixes (pydantic, sqlalchemy, alembic, psycopg2-binary upgraded)
-- ✅ Database migrations run successfully on Render PostgreSQL
-- ✅ API service deployed and running (LIVE)
-- ✅ Worker service deployed and running (LIVE)
-- ✅ Frontend service deployed and running (LIVE)
-- ✅ Database connection verified (connected)
-- ✅ CORS configuration updated for Render frontend URL
-- ✅ Environment variables set for API and Worker services
-- ✅ Redis connection strings configured (but not linked - requires manual dashboard linking)
+**Implementation Completed:**
+- ✅ Database schema: Student model, Tutor extension, MatchPrediction model
+- ✅ Database migration created and ready
+- ✅ Feature engineering service implemented
+- ✅ ML model training script created (XGBoost)
+- ✅ Match prediction service with fallback logic
+- ✅ AI explanation service (OpenAI GPT-4 with fallback)
+- ✅ All API endpoints implemented (`/api/matching/*`)
+- ✅ Frontend dashboard with three-column layout
+- ✅ Student/Tutor selection components
+- ✅ Match detail panel with visualizations
+- ✅ Data generation script for testing
+- ✅ Comprehensive test suite
+- ✅ Full documentation
 
-**Remaining Issues:**
-- ⚠️ Redis connection not working (hostname resolution issue - `red-d45b2tumcj7s738scvi0` not resolving)
-- ⚠️ Redis connection strings need manual linking in Render dashboard (MCP API doesn't expose internal connection strings)
-- ⚠️ Test data seeding not completed (script ready, needs DATABASE_URL from Render environment)
+**Key Features Implemented:**
+- ✅ Student profile management with preferences (CRUD endpoints)
+- ✅ Tutor preference enhancement (extend existing tutor model)
+- ✅ ML model for churn prediction (XGBoost with rule-based fallback)
+- ✅ Matching dashboard with interactive interface (`/matching` route)
+- ✅ AI-powered explanations for match quality (GPT-4 with fallback)
+- ✅ Synthetic data generation for testing
+- ✅ Batch prediction generation
+- ✅ Match filtering and sorting
 
-**Key Learnings:**
-1. **Python 3.13 Compatibility:** Render uses Python 3.13 by default, requiring dependency upgrades:
-   - `pydantic>=2.9.0` (was 2.5.0)
-   - `pydantic-settings>=2.6.0`
-   - `sqlalchemy>=2.0.36` (was 2.0.23)
-   - `alembic>=1.14.0` (was 1.12.1)
-   - `psycopg2-binary>=2.9.10` (was 2.9.9)
-2. **Runtime.txt Placement:** `runtime.txt` must be in project root (not backend/), though Python 3.13 worked with updated dependencies
-3. **Redis Connection Strings:** Render's Key Value (Redis) service requires internal connection strings that must be manually linked in dashboard - MCP API doesn't provide this
-4. **Environment Variables:** Sensitive keys (SENDGRID_API_KEY, API_KEY, SECRET_KEY) should be set manually in Render dashboard, not via MCP
-5. **CORS Configuration:** Dynamic CORS origins from environment variable works well for multi-environment deployments
-6. **Data Generation:** Script updated for realistic names, matching emails, and varied student ID patterns
+**Files Created:**
+- Backend: `app/models/student.py`, `app/models/match_prediction.py`
+- Backend: `app/services/feature_engineering.py`, `app/services/match_prediction_service.py`, `app/services/ai_explanation_service.py`
+- Backend: `app/api/matching.py`
+- Backend: `app/schemas/student.py`, `app/schemas/match_prediction.py`
+- Backend: `alembic/versions/add_matching_tables.py`
+- Backend: `tests/api/test_matching.py`, `tests/services/test_feature_engineering.py`, `tests/services/test_match_prediction_service.py`
+- Scripts: `scripts/train_match_model.py`, `scripts/generate_matching_data.py`
+- Frontend: `src/pages/MatchingDashboard.jsx`
+- Frontend: `src/components/matching/StudentList.jsx`, `TutorList.jsx`, `MatchDetailPanel.jsx`
+- Frontend: `src/services/matchingApi.js`
+- Documentation: `docs/MATCHING_SERVICE.md`, `MANUAL_TESTING_MATCHING_SERVICE.md`
 
-**AWS Deployment Considerations for Tomorrow:**
-- Use AWS RDS for PostgreSQL (managed service)
-- Use AWS ElastiCache for Redis (managed service)
-- Use ECS or EC2 for API and Worker services
-- Use S3 + CloudFront for frontend static hosting
-- Configure VPC networking for internal service communication
-- Set up security groups and IAM roles properly
-- Use AWS Secrets Manager for sensitive environment variables
-- Consider using AWS ECS Fargate for serverless container deployment
+**Next Steps:**
+- Run database migration: `alembic upgrade head`
+- Generate test data: `python scripts/generate_matching_data.py --num-students 20`
+- (Optional) Train ML model: `python scripts/train_match_model.py`
+- Manual testing following `MANUAL_TESTING_MATCHING_SERVICE.md`
+
+### Deployment Phase: ✅ AWS DEPLOYMENT COMPLETE
+**Status:** Fully deployed to AWS with complete infrastructure  
+**Infrastructure:** AWS RDS, ElastiCache, ECS Fargate, ALB, S3, CloudFront
+
+**AWS Infrastructure Deployed:**
+- ✅ VPC with public/private subnets (or default VPC with fallback)
+- ✅ RDS PostgreSQL 14.19 (tutor-scoring-db)
+- ✅ ElastiCache Redis cluster
+- ✅ ECR repositories for API and Worker images
+- ✅ ECS Fargate cluster with API service
+- ✅ Application Load Balancer (ALB)
+- ✅ S3 bucket for frontend static hosting
+- ✅ CloudFront distribution for CDN
+- ✅ AWS Secrets Manager for sensitive variables
+- ✅ IAM roles and policies configured
+- ✅ Security groups configured
+- ✅ Database migrations run via ECS task
+- ✅ Test data seeded via ECS task
+
+**Key Architecture:**
+- **Frontend:** S3 → CloudFront (HTTPS) → `https://d2iu6aqgs7qt5d.cloudfront.net`
+- **API:** ECS Fargate → ALB → CloudFront `/api/*` → `https://d2iu6aqgs7qt5d.cloudfront.net/api/*`
+- **Database:** RDS PostgreSQL (private subnet)
+- **Cache/Queue:** ElastiCache Redis (private subnet)
+- **Secrets:** AWS Secrets Manager
+
+**Deployment Scripts:**
+- `scripts/aws_deploy/auto_deploy.sh` - Main orchestration script
+- `scripts/aws_deploy/setup_infrastructure.sh` - VPC, subnets, security groups
+- `scripts/aws_deploy/setup_rds_redis.sh` - Database and Redis
+- `scripts/aws_deploy/setup_ecr.sh` - Container registry and image builds
+- `scripts/aws_deploy/setup_ecs.sh` - ECS cluster, services, task definitions
+- `scripts/aws_deploy/setup_secrets.sh` - Secrets Manager configuration
+- `scripts/aws_deploy/deploy_frontend.sh` - S3 and CloudFront deployment
+- `scripts/aws_deploy/update_cors.sh` - CORS configuration updates
+- `scripts/aws_deploy/run_migrations.sh` - Run database migrations via ECS task
+- `scripts/aws_deploy/seed_data.sh` - Seed test data via ECS task
+- `scripts/aws_deploy/fix_frontend_api_key.sh` - Rebuild frontend with API key (utility)
+- `backend/scripts/generate_data.py` - Generate sample tutor/session data
+
+**Issues Resolved:**
+- ✅ Mixed content (HTTP/HTTPS): Fixed by using relative URLs in frontend, CloudFront proxying `/api/*`
+- ✅ ALB listener: Fixed redirect to forward to target group
+- ✅ Docker platform: Fixed by building with `--platform linux/amd64` for ECS Fargate
+- ✅ AWS service limits: Handled with fallbacks (default VPC, existing resources)
+- ✅ Frontend 403: Fixed S3 bucket policy and Block Public Access settings
+- ✅ Frontend API key: Created `.env.production` with `VITE_API_KEY` for authenticated requests
+- ✅ Database schema sync: Ran migrations before seeding data
+- ✅ Data seeding: Created `backend/scripts/generate_data.py` with proper model imports
+
+**Current Status:**
+- ✅ ECS Service: Running (1/1 tasks healthy)
+- ✅ ALB Target: Healthy
+- ✅ API Endpoints: Responding (200 OK)
+- ✅ Frontend: Deployed and accessible at `https://d2iu6aqgs7qt5d.cloudfront.net`
+- ✅ CloudFront: Configured with API proxy (`/api/*` → ALB over HTTPS)
+- ✅ API Key: Configured in frontend build (`VITE_API_KEY`)
+- ✅ Database: Migrations applied, 10 tutors seeded with session/reschedule data
+- ✅ All systems operational and tested
+
+**AWS Deployment Learnings:**
+1. **Service Limits:** VPC, IGW, EIP limits require fallback strategies (default VPC, existing resources)
+2. **Docker Platform:** Must build with `--platform linux/amd64` for ECS Fargate compatibility
+3. **CloudFront API Proxy:** Use cache behaviors to route `/api/*` to ALB origin
+4. **Mixed Content:** Frontend must use relative URLs (`/api/*`) to avoid HTTP/HTTPS conflicts
+5. **S3 Website Hosting:** Requires Block Public Access disabled and bucket policy for public read
+6. **ALB Listeners:** Must forward to target groups, not redirect (for API traffic)
+7. **ECS Task Registration:** Tasks take 1-2 minutes to register with ALB target groups
+8. **CloudFront Cache:** Invalidations take 2-3 minutes, browser cache requires hard refresh
+9. **CORS Configuration:** Must match CloudFront origin exactly
+10. **Secrets Management:** AWS Secrets Manager integrates with ECS task definitions
+
+**Troubleshooting:**
+- See `scripts/aws_deploy/TROUBLESHOOTING.md` for diagnostic guide
+- Common issues: Browser cache, CloudFront cache, API key configuration, CORS mismatches
 
 ### Environment Setup: ✅ COMPLETE
 

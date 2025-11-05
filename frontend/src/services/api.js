@@ -1,17 +1,17 @@
 import axios from 'axios'
 
-// Use CloudFront URL for API (which proxies to ALB)
-// This ensures all requests go through HTTPS
+// Always use relative URLs in production to ensure same-origin requests
+// This works with CloudFront which proxies /api/* to ALB
 const getApiUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL
   }
   
-  // In production, use CloudFront URL (same domain as frontend)
-  // CloudFront will proxy /api/* requests to ALB
+  // In production, always use relative URL (same domain as frontend)
+  // This ensures all requests go through HTTPS CloudFront
   if (import.meta.env.PROD) {
-    // Use relative URL or same CloudFront domain
-    return window.location.origin
+    // Use empty string for relative URLs, or window.location.origin
+    return ''  // Empty string means relative to current origin
   }
   
   return 'http://localhost:8001'

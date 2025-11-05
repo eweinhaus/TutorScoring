@@ -7,6 +7,8 @@ from app.models.session import Session
 from app.models.reschedule import Reschedule
 from app.models.tutor_score import TutorScore
 from app.models.email_report import EmailReport
+from app.models.student import Student
+from app.models.match_prediction import MatchPrediction
 
 __all__ = [
     'Base',
@@ -16,5 +18,7 @@ __all__ = [
     'Reschedule',
     'TutorScore',
     'EmailReport',
+    'Student',
+    'MatchPrediction',
 ]
 
