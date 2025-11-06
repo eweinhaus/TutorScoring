@@ -175,6 +175,24 @@ tutors (1) ──< (many) match_predictions
 **MVP:** Simple API key in header (`X-API-Key`)
 **Future:** JWT tokens, OAuth integration
 
+**API Key Configuration:**
+- **Backend:** Reads `API_KEY` from `backend/.env` or environment variables
+- **Frontend:** Reads `VITE_API_KEY` from `frontend/.env` or environment variables
+- **Critical:** Both must match exactly or API calls will return 401 Unauthorized
+- **Location:**
+  - Backend: `backend/.env` → `API_KEY=...`
+  - Frontend: `frontend/.env` → `VITE_API_KEY=...`
+- **Frontend Services:**
+  - Main API: `frontend/src/services/api.js` uses `import.meta.env.VITE_API_KEY`
+  - Matching API: `frontend/src/services/matchingApi.js` uses `import.meta.env.VITE_API_KEY`
+- **Troubleshooting 401 Errors:**
+  1. Check backend API key: `cd backend && source venv/bin/activate && python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('API_KEY'))"`
+  2. Check frontend API key: `cat frontend/.env | grep VITE_API_KEY`
+  3. Ensure they match exactly
+  4. Update frontend `.env` if needed: `VITE_API_KEY=<backend-api-key>`
+  5. **Restart frontend dev server** (Vite only reads `.env` at startup)
+  6. Verify: Check browser console for API key length log: `[API] API key configured (length: X)`
+
 ---
 
 ## Background Processing Patterns
@@ -512,6 +530,23 @@ components/
   - httpx 0.28.1+ introduces breaking changes (removes `app` parameter)
   - TestClient fixture fails with newer httpx versions
   - Always pin httpx to compatible version in requirements.txt
+
+### Matching Service Data Generation
+
+**Script:** `scripts/generate_matching_data.py`
+- **Usage:** `python scripts/generate_matching_data.py --num-students 20`
+- **Functions:**
+  - `generate_students()` - Creates student profiles with preferences
+  - `enhance_tutors()` - Adds matching preferences to existing tutors
+  - `generate_predictions()` - Creates match predictions for all student-tutor pairs
+- **Important Notes:**
+  - Uses `db.add_all()` not `bulk_save_objects()` for proper session management
+  - No need to import `get_tutor_stats` (builds tutor_stats manually from `tutor.tutor_score`)
+  - ML model warnings are expected if xgboost not installed (uses rule-based fallback)
+- **Troubleshooting:**
+  - If import error: Check `app/services/tutor_service.py` for actual function names
+  - If session error: Ensure using `db.add_all()` followed by `db.commit()` and `db.refresh()`
+  - If no students: Run `python scripts/generate_matching_data.py --num-students 20`
 
 ---
 

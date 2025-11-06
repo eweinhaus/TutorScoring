@@ -1,8 +1,8 @@
 # Active Context
 ## Tutor Quality Scoring System
 
-**Last Updated:** Matching Service Planning Complete  
-**Current Focus:** Matching Service Planning Complete, Ready for Implementation
+**Last Updated:** Matching Dashboard 401 Fix Complete  
+**Current Focus:** Matching Service Fully Functional, All Issues Resolved
 
 ---
 
@@ -190,7 +190,27 @@ All environment setup tasks completed:
 
 ## Recent Changes
 
-### All Business Logic Test Failures Fixed - 100% Test Pass Rate (Latest)
+### Matching Dashboard 401 Unauthorized Fix (Latest)
+
+**Issue:** Matching dashboard showing 401 Unauthorized errors when loading students/tutors
+- **Symptoms:** Browser console shows `Failed to load resource: the server responded with a status of 401 (Unauthorized)` for `/api/matching/students` and `/api/matching/tutors` endpoints
+- **Root Cause:** Frontend `.env` file had different API key than backend, causing authentication mismatch
+- **Solution:**
+  1. Get backend API key: `cd backend && source venv/bin/activate && python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('API_KEY'))"`
+  2. Update frontend `.env`: Set `VITE_API_KEY` to match backend `API_KEY`
+  3. **Restart frontend dev server** (Vite reads `.env` only at startup)
+  4. Verify API key matches: Both should use the same value from `backend/.env`
+- **Prevention:** Always ensure `frontend/.env` `VITE_API_KEY` matches `backend/.env` `API_KEY`
+- **Files:** `frontend/.env`, `frontend/src/services/matchingApi.js`, `backend/app/middleware/auth.py`
+- **Related:** Also fixed unused import in `scripts/generate_matching_data.py` (removed `get_tutor_stats`) and database session issue (changed `bulk_save_objects` to `add_all`)
+
+**Matching Service Data Generation:**
+- ✅ Fixed import error: Removed unused `get_tutor_stats` import
+- ✅ Fixed database session issue: Changed `bulk_save_objects` to `add_all` for proper session management
+- ✅ Generated 40 students, enhanced 100 tutors, created 4000 match predictions
+- ✅ Script: `scripts/generate_matching_data.py --num-students 20`
+
+### All Business Logic Test Failures Fixed - 100% Test Pass Rate (Previous)
 
 **Fixed Issues:**
 1. **Email Report `sent_at` Constraint** ✅

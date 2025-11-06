@@ -16,10 +16,24 @@ All matching service tasks have been completed:
 - ✅ AI explanation service
 - ✅ Testing suite
 - ✅ Documentation
+- ✅ Data generation script fixed and tested
+- ✅ API key configuration fixed (matching dashboard now functional)
 
 ### Implementation Details
 See `docs/MATCHING_SERVICE.md` for full documentation.
 See `MANUAL_TESTING_MATCHING_SERVICE.md` for testing instructions.
+
+### Setup and Troubleshooting
+**To start matching dashboard:**
+1. Ensure database migration applied: `cd backend && alembic upgrade head`
+2. Generate matching data: `python scripts/generate_matching_data.py --num-students 20`
+3. Verify API keys match: `frontend/.env` `VITE_API_KEY` must match `backend/.env` `API_KEY`
+4. Restart frontend dev server after `.env` changes (Vite reads env vars at startup)
+
+**Common Issues:**
+- **401 Unauthorized:** Frontend and backend API keys don't match - see `systemPatterns.md` Authentication Pattern section
+- **No students:** Run data generation script: `python scripts/generate_matching_data.py --num-students 20`
+- **Import errors in data script:** Fixed - removed unused `get_tutor_stats` import, use `db.add_all()` not `bulk_save_objects()`
 
 ---
 

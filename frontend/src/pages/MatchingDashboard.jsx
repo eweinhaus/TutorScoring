@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getStudents, getTutors, getMatchPrediction } from '../services/matchingApi'
+import { getStudents, getTutors } from '../services/matchingApi'
 import StudentList from '../components/matching/StudentList'
 import TutorList from '../components/matching/TutorList'
-import MatchDetailPanel from '../components/matching/MatchDetailPanel'
+import MatchDetailModal from '../components/matching/MatchDetailModal'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 
@@ -13,6 +13,7 @@ import ErrorMessage from '../components/common/ErrorMessage'
 function MatchingDashboard() {
   const [selectedStudentId, setSelectedStudentId] = useState(null)
   const [selectedTutorId, setSelectedTutorId] = useState(null)
+  const [matchModalOpen, setMatchModalOpen] = useState(false)
 
   // Fetch students
   const {
@@ -34,19 +35,15 @@ function MatchingDashboard() {
     queryFn: () => getTutors(100, 0),
   })
 
-  // Fetch match prediction when both selected
-  const {
-    data: matchPrediction,
-    isLoading: matchLoading,
-    error: matchError,
-  } = useQuery({
-    queryKey: ['match-prediction', selectedStudentId, selectedTutorId],
-    queryFn: () => getMatchPrediction(selectedStudentId, selectedTutorId),
-    enabled: !!selectedStudentId && !!selectedTutorId,
-  })
-
   const students = studentsData?.students || []
   const tutors = tutorsData || []
+
+  // Open match modal when both student and tutor are selected
+  useEffect(() => {
+    if (selectedStudentId && selectedTutorId) {
+      setMatchModalOpen(true)
+    }
+  }, [selectedStudentId, selectedTutorId])
 
   const handleStudentSelect = (studentId) => {
     setSelectedStudentId(studentId)
@@ -56,12 +53,19 @@ function MatchingDashboard() {
     setSelectedTutorId(tutorId)
   }
 
+  const handleCloseMatchModal = () => {
+    setMatchModalOpen(false)
+    // Optionally clear selections when modal closes
+    // setSelectedStudentId(null)
+    // setSelectedTutorId(null)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Matching Dashboard</h1>
         <p className="text-gray-600">
-          Select a student and tutor to view match predictions and compatibility analysis.
+          Select a student and tutor to view match predictions and compatibility analysis. The match details will open in a popup.
         </p>
       </div>
 
@@ -79,9 +83,9 @@ function MatchingDashboard() {
 
       {/* Main content */}
       {!studentsLoading && !tutorsLoading && !studentsError && !tutorsError && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Students column */}
-          <div className="lg:col-span-1">
+          <div>
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-xl font-semibold mb-4">Students</h2>
               {students.length === 0 ? (
@@ -97,7 +101,7 @@ function MatchingDashboard() {
           </div>
 
           {/* Tutors column */}
-          <div className="lg:col-span-1">
+          <div>
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-xl font-semibold mb-4">Tutors</h2>
               {tutors.length === 0 ? (
@@ -111,27 +115,16 @@ function MatchingDashboard() {
               )}
             </div>
           </div>
-
-          {/* Match detail panel */}
-          <div className="lg:col-span-1">
-            {selectedStudentId && selectedTutorId ? (
-              <MatchDetailPanel
-                studentId={selectedStudentId}
-                tutorId={selectedTutorId}
-                matchPrediction={matchPrediction}
-                isLoading={matchLoading}
-                error={matchError}
-              />
-            ) : (
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-gray-500 text-center py-8">
-                  Select a student and tutor to view match details
-                </p>
-              </div>
-            )}
-          </div>
         </div>
       )}
+
+      {/* Match Detail Modal */}
+      <MatchDetailModal
+        studentId={selectedStudentId}
+        tutorId={selectedTutorId}
+        isOpen={matchModalOpen}
+        onClose={handleCloseMatchModal}
+      />
     </div>
   )
 }
