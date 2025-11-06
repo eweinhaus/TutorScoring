@@ -32,19 +32,14 @@ function MatchingResultsModal({ isOpen, onClose, results }) {
     return (value * 100).toFixed(1) + '%'
   }
 
-  const getChurnProbabilityColor = (probability) => {
-    // probability is between 0 and 1
-    if (probability <= 0.33) {
-      return 'text-green-600 font-semibold'
-    } else if (probability <= 0.66) {
-      return 'text-yellow-600 font-semibold'
-    } else {
-      return 'text-red-600 font-semibold'
-    }
-  }
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Matching Results" size="xl">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title="Matching Results" 
+      size="xl"
+      headerClassName="p-6"
+    >
       <div className="space-y-6">
         {/* Matched Pairs Table */}
         <div className="overflow-x-auto">
@@ -79,7 +74,7 @@ function MatchingResultsModal({ isOpen, onClose, results }) {
                       <div className="text-sm font-medium text-gray-900">{tutorName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${getChurnProbabilityColor(churnProbability)}`}>
+                      <div className="text-sm font-medium text-gray-900">
                         {formatPercent(churnProbability)}
                       </div>
                     </td>

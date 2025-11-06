@@ -627,6 +627,176 @@ components/
 - Configurable thresholds (default: Low < 0.3, Medium 0.3-0.7, High ≥ 0.7)
 - Stored in environment variables for flexibility
 
+### XGBoost ML Model Workflow
+
+**Model Type:** XGBoost Binary Classifier (XGBClassifier)  
+**Purpose:** Predict churn probability (0-1) for student-tutor matches  
+**Location:** `backend/app/services/match_prediction_service.py`  
+**Training Script:** `scripts/train_match_model.py`
+
+#### Model Training Workflow
+
+**Training Process (`train_match_model.py`):**
+1. **Generate Synthetic Training Data:**
+   - Creates 1000+ synthetic student-tutor pairs
+   - Uses realistic churn distribution (~12% churn rate)
+   - Generates features using `extract_features()` from feature_engineering service
+   - Labels: binary (0=no churn, 1=churn) based on compatibility threshold
+
+2. **Data Split:**
+   - 80/20 train/test split with stratification
+   - Random state: 42 (reproducible)
+
+3. **Model Configuration:**
+   - Algorithm: XGBoost (XGBClassifier)
+   - Hyperparameters:
+     - `n_estimators=100` (number of trees)
+     - `max_depth=5` (tree depth limit)
+     - `learning_rate=0.1` (shrinkage)
+     - `random_state=42` (reproducibility)
+     - `eval_metric='logloss'` (evaluation metric)
+   - Class imbalance handling:
+     - `scale_pos_weight` = ratio of negative to positive samples
+     - `sample_weight` = 'balanced' weights applied during training
+
+4. **Training:**
+   - Model trained with sample weights to handle class imbalance
+   - Target precision: >70%
+
+5. **Evaluation:**
+   - Metrics calculated: accuracy, precision, recall, F1-score, ROC-AUC
+   - Feature importance extracted and displayed (top 10 features)
+
+6. **Model Persistence:**
+   - Model saved to: `backend/models/match_model.pkl` (joblib format)
+   - Feature names saved to: `backend/models/feature_names.json`
+   - Metadata saved to: `backend/models/model_metadata.json`:
+     - Model version (v1.0)
+     - Training timestamp
+     - Performance metrics
+     - Feature count
+
+#### Feature Engineering Workflow
+
+**Feature Extraction (`feature_engineering.py`):**
+
+**Total Features: 17 features**
+
+1. **Mismatch Scores (4 features):**
+   - `pace_mismatch`: |student.preferred_pace - tutor.preferred_pace| (0-4 scale)
+   - `style_mismatch`: Binary (0=match, 1=mismatch) based on teaching style match
+   - `communication_mismatch`: |student.communication_style_preference - tutor.communication_style| (0-4 scale)
+   - `age_difference`: |student.age - tutor.age| (absolute difference)
+
+2. **Student Features (5 features):**
+   - `student_age`: Student age (default: 15.0 if missing)
+   - `student_pace`: Student preferred pace (1-5, default: 3.0)
+   - `student_urgency`: Urgency level (1-5, default: 3.0)
+   - `student_experience`: Previous tutoring experience count (default: 0.0)
+   - `student_satisfaction`: Previous satisfaction rating (1-5, default: 3.0)
+
+3. **Tutor Features (4 features):**
+   - `tutor_age`: Tutor age (default: 30.0 if missing)
+   - `tutor_experience`: Experience years (default: 2.0)
+   - `tutor_confidence`: Confidence level (1-5, default: 3.0)
+   - `tutor_pace`: Tutor preferred pace (1-5, default: 3.0)
+
+4. **Tutor Statistics (3 features, optional):**
+   - `tutor_reschedule_rate_30d`: Reschedule rate over 30 days (0.0-1.0)
+   - `tutor_total_sessions_30d`: Total sessions in last 30 days
+   - `tutor_is_high_risk`: Binary flag (1.0 if high risk, 0.0 otherwise)
+
+5. **Derived Feature (1 feature):**
+   - `compatibility_score`: Weighted compatibility score (0-1) calculated from mismatch scores
+
+**Feature Calculation:**
+- `calculate_mismatch_scores()`: Computes 4 mismatch metrics
+- `calculate_compatibility_score()`: Converts mismatches to 0-1 compatibility score
+- `extract_features()`: Combines all features into feature vector in consistent order
+
+#### Prediction Workflow
+
+**Prediction Process (`match_prediction_service.py`):**
+
+1. **Model Loading (Cached):**
+   - Function: `load_model()`
+   - First call: Loads model from disk (`backend/models/match_model.pkl`)
+   - Caches model, feature names, and metadata in memory
+   - Subsequent calls: Returns cached model (no disk I/O)
+   - Error handling: Raises `FileNotFoundError` if model not found, `ImportError` if ML libraries missing
+
+2. **Feature Extraction:**
+   - Function: `extract_features(student, tutor, tutor_stats)`
+   - Extracts all 17 features for the student-tutor pair
+   - Returns dictionary of feature name → value
+
+3. **Feature Vector Construction:**
+   - Ensures features are in correct order (matching training order)
+   - Uses `feature_names.json` to order features correctly
+   - Creates numpy array: `np.array([[feature_values]])`
+
+4. **Churn Probability Prediction:**
+   - Function: `predict_churn_risk(student, tutor, tutor_stats)`
+   - Calls `model.predict_proba(feature_vector)[0, 1]`
+   - Returns probability of churn (class 1) as float (0-1)
+
+5. **Risk Level Determination:**
+   - Function: `determine_risk_level(probability, low_threshold=0.3, high_threshold=0.7)`
+   - Thresholds configurable via environment variables:
+     - `MATCH_RISK_THRESHOLD_LOW` (default: 0.3)
+     - `MATCH_RISK_THRESHOLD_HIGH` (default: 0.7)
+   - Returns: 'low', 'medium', or 'high'
+
+6. **Full Match Prediction:**
+   - Function: `predict_match(student, tutor, tutor_stats)`
+   - Returns dictionary with:
+     - `churn_probability`: float (0-1)
+     - `risk_level`: str ('low', 'medium', 'high')
+     - `compatibility_score`: float (0-1)
+     - `mismatch_scores`: dict with pace, style, communication, age differences
+
+#### Fallback Mechanism
+
+**Rule-Based Fallback:**
+- Triggered when:
+  - Model file not found (`FileNotFoundError`)
+  - ML libraries not installed (`ImportError`)
+- Fallback logic:
+  1. Calculate mismatch scores using `calculate_mismatch_scores()`
+  2. Calculate compatibility score using `calculate_compatibility_score()`
+  3. Churn probability = 1.0 - compatibility_score
+  4. Risk level determined from churn probability
+- Service continues to work without trained model (graceful degradation)
+
+#### Model Storage and Files
+
+**Directory:** `backend/models/`
+
+**Files:**
+1. `match_model.pkl`: Trained XGBoost model (joblib format)
+2. `feature_names.json`: Ordered list of feature names (JSON array)
+3. `model_metadata.json`: Model metadata including:
+   - `model_version`: Version string (e.g., 'v1.0')
+   - `trained_at`: ISO timestamp of training
+   - `metrics`: Performance metrics (accuracy, precision, recall, F1, ROC-AUC)
+   - `feature_count`: Number of features
+
+#### Model Usage in API
+
+**Prediction Endpoints:**
+- `GET /api/matching/predict/{student_id}/{tutor_id}`: Get or create match prediction
+- `POST /api/matching/generate-all`: Batch generate predictions for all pairs
+
+**Database Storage:**
+- Predictions stored in `match_predictions` table via `get_or_create_match_prediction()`
+- Pre-calculated predictions for fast API responses
+- Unique constraint on (student_id, tutor_id) prevents duplicates
+
+**Performance:**
+- Model loading: Cached in memory (first load ~100-200ms, subsequent loads ~0ms)
+- Prediction time: <10ms per prediction (in-memory model)
+- Batch generation: ~100 predictions/second
+
 ### AI Explanation Pattern
 
 **On-Demand Generation:**

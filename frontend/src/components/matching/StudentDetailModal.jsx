@@ -49,30 +49,30 @@ function StudentDetailModal({ studentId, isOpen, onClose }) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Student Profile" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Student Profile" size="md">
       {isLoading && <LoadingSpinner message="Loading student details..." />}
       {error && <ErrorMessage message={error.message || 'Failed to load student details'} />}
       
       {student && (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Basic Information */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
               Basic Information
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-sm text-gray-500">Name</span>
-                <p className="text-base font-medium text-gray-900">{student.name}</p>
+                <span className="text-xs text-gray-500">Name</span>
+                <p className="text-sm font-medium text-gray-900">{student.name}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-500">Age</span>
-                <p className="text-base font-medium text-gray-900">{student.age} years</p>
+                <span className="text-xs text-gray-500">Age</span>
+                <p className="text-sm font-medium text-gray-900">{student.age} years</p>
               </div>
               {student.sex && (
                 <div>
-                  <span className="text-sm text-gray-500">Sex</span>
-                  <p className="text-base font-medium text-gray-900 capitalize">{student.sex}</p>
+                  <span className="text-xs text-gray-500">Sex</span>
+                  <p className="text-sm font-medium text-gray-900 capitalize">{student.sex}</p>
                 </div>
               )}
             </div>
@@ -80,54 +80,54 @@ function StudentDetailModal({ studentId, isOpen, onClose }) {
 
           {/* Learning Preferences */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
               Learning Preferences
             </h3>
-            <div className="space-y-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-sm font-medium text-gray-700">Preferred Pace</span>
-                  <span className="text-sm text-gray-600">{formatScale(student.preferred_pace, 5)}</span>
+            <div className="space-y-2">
+              <div className="bg-gray-50 rounded p-2">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="text-xs font-medium text-gray-700">Pace</span>
+                  <span className="text-xs text-gray-600">{formatScale(student.preferred_pace, 5)}</span>
                 </div>
-                <p className="text-xs text-gray-500">{getPaceLabel(student.preferred_pace)}</p>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <p className="text-xs text-gray-500 mb-1">{getPaceLabel(student.preferred_pace)}</p>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div
-                    className="bg-blue-500 h-2 rounded-full"
+                    className="bg-blue-500 h-1.5 rounded-full"
                     style={{ width: `${(student.preferred_pace / 5) * 100}%` }}
                   />
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-sm font-medium text-gray-700">Teaching Style</span>
-                  <span className="text-sm text-gray-600 capitalize">{student.preferred_teaching_style || 'N/A'}</span>
+              <div className="bg-gray-50 rounded p-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-gray-700">Teaching Style</span>
+                  <span className="text-xs text-gray-600 capitalize">{student.preferred_teaching_style || 'N/A'}</span>
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-sm font-medium text-gray-700">Communication Style</span>
-                  <span className="text-sm text-gray-600">{formatScale(student.communication_style_preference, 5)}</span>
+              <div className="bg-gray-50 rounded p-2">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="text-xs font-medium text-gray-700">Communication</span>
+                  <span className="text-xs text-gray-600">{formatScale(student.communication_style_preference, 5)}</span>
                 </div>
-                <p className="text-xs text-gray-500">{getCommunicationLabel(student.communication_style_preference)}</p>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <p className="text-xs text-gray-500 mb-1">{getCommunicationLabel(student.communication_style_preference)}</p>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div
-                    className="bg-green-500 h-2 rounded-full"
+                    className="bg-green-500 h-1.5 rounded-full"
                     style={{ width: `${(student.communication_style_preference / 5) * 100}%` }}
                   />
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-sm font-medium text-gray-700">Urgency Level</span>
-                  <span className="text-sm text-gray-600">{formatScale(student.urgency_level, 5)}</span>
+              <div className="bg-gray-50 rounded p-2">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="text-xs font-medium text-gray-700">Urgency</span>
+                  <span className="text-xs text-gray-600">{formatScale(student.urgency_level, 5)}</span>
                 </div>
-                <p className="text-xs text-gray-500">{getUrgencyLabel(student.urgency_level)}</p>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <p className="text-xs text-gray-500 mb-1">{getUrgencyLabel(student.urgency_level)}</p>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div
-                    className="bg-orange-500 h-2 rounded-full"
+                    className="bg-orange-500 h-1.5 rounded-full"
                     style={{ width: `${(student.urgency_level / 5) * 100}%` }}
                   />
                 </div>
@@ -137,21 +137,21 @@ function StudentDetailModal({ studentId, isOpen, onClose }) {
 
           {/* Learning History */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
               Learning History
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-sm text-gray-500">Previous Tutoring Experience</span>
-                <p className="text-base font-medium text-gray-900">
-                  {student.previous_tutoring_experience || 0} sessions
+                <span className="text-xs text-gray-500">Previous Sessions</span>
+                <p className="text-sm font-medium text-gray-900">
+                  {student.previous_tutoring_experience || 0}
                 </p>
               </div>
               {student.previous_satisfaction && (
                 <div>
-                  <span className="text-sm text-gray-500">Previous Satisfaction</span>
-                  <p className="text-base font-medium text-gray-900">
-                    {formatScale(student.previous_satisfaction, 5)} - {getSatisfactionLabel(student.previous_satisfaction)}
+                  <span className="text-xs text-gray-500">Satisfaction</span>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatScale(student.previous_satisfaction, 5)}
                   </p>
                 </div>
               )}
@@ -161,10 +161,10 @@ function StudentDetailModal({ studentId, isOpen, onClose }) {
           {/* Learning Goals */}
           {student.learning_goals && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+              <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
                 Learning Goals
               </h3>
-              <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-700 bg-gray-50 rounded p-2 line-clamp-3">
                 {student.learning_goals}
               </p>
             </div>
@@ -173,12 +173,12 @@ function StudentDetailModal({ studentId, isOpen, onClose }) {
           {/* Additional Preferences */}
           {student.preferences_json && Object.keys(student.preferences_json).length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+              <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
                 Additional Preferences
               </h3>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(student.preferences_json, null, 2)}
+              <div className="bg-gray-50 rounded p-2">
+                <pre className="text-xs text-gray-700 whitespace-pre-wrap max-h-24 overflow-hidden">
+                  {JSON.stringify(student.preferences_json, null, 1)}
                 </pre>
               </div>
             </div>

@@ -21,6 +21,7 @@ function MatchingDashboard() {
   const [algorithmModalOpen, setAlgorithmModalOpen] = useState(false)
   const [resultsModalOpen, setResultsModalOpen] = useState(false)
   const [matchingResults, setMatchingResults] = useState(null)
+  const [showLoadingForResults, setShowLoadingForResults] = useState(false)
 
   // Fetch students
   const {
@@ -67,8 +68,14 @@ function MatchingDashboard() {
     // setSelectedTutorId(null)
   }
 
-  const handleResultsReady = (results) => {
+  const handleResultsReady = async (results) => {
     setMatchingResults(results)
+    setShowLoadingForResults(true)
+    
+    // Show loading for at least 0.75 seconds
+    await new Promise(resolve => setTimeout(resolve, 750))
+    
+    setShowLoadingForResults(false)
     setResultsModalOpen(true)
   }
 
@@ -154,6 +161,15 @@ function MatchingDashboard() {
         onClose={() => setAlgorithmModalOpen(false)}
         onResultsReady={handleResultsReady}
       />
+
+      {/* Loading overlay for matching results */}
+      {showLoadingForResults && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-8 shadow-xl">
+            <LoadingSpinner message="Processing matching results..." size="large" />
+          </div>
+        </div>
+      )}
 
       {/* Matching Results Modal */}
       <MatchingResultsModal

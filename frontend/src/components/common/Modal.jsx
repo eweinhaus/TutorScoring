@@ -3,7 +3,7 @@ import React from 'react'
 /**
  * Reusable Modal component for displaying content in a popup overlay.
  */
-function Modal({ isOpen, onClose, title, children, size = 'md' }) {
+function Modal({ isOpen, onClose, title, children, size = 'md', headerClassName = '' }) {
   if (!isOpen) return null
 
   const sizeClasses = {
@@ -31,8 +31,8 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
+          <div className={`flex items-center justify-between border-b border-gray-200 ${headerClassName || 'p-4'}`}>
+            <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
               {title}
             </h2>
             <button
@@ -41,7 +41,7 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
               aria-label="Close modal"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -55,7 +55,7 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto flex-1">{children}</div>
+          <div className="p-4 overflow-y-auto flex-1">{children}</div>
         </div>
       </div>
     </div>

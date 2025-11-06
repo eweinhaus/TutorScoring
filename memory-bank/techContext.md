@@ -40,6 +40,17 @@ pydantic==2.5.0
 httpx==0.27.2  # Pinned for Starlette TestClient compatibility
 ```
 
+**ML Dependencies (Optional - for Matching Service):**
+```
+xgboost>=2.0.0  # XGBoost binary classifier for churn prediction
+scikit-learn>=1.3.0  # Model evaluation and utilities
+pandas>=2.0.0  # Data manipulation (training script)
+numpy>=1.24.0  # Numerical operations
+joblib>=1.3.0  # Model serialization
+faker>=19.0.0  # Synthetic data generation (training script)
+```
+**Note:** ML libraries are optional. The matching service works with rule-based fallback if ML libraries are not installed or model is not trained.
+
 ### Frontend Stack
 
 **Framework:**
