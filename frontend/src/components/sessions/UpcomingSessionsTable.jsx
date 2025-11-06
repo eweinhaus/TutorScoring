@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import RiskBadge from '../common/RiskBadge'
-import { formatPercentage, formatDateTime } from '../../utils/formatters'
+import { formatRescheduleProbability, formatDateTime } from '../../utils/formatters'
 import { UPCOMING_SESSIONS_SORT_OPTIONS, SORT_ORDER } from '../../utils/constants'
 
 /**
@@ -76,7 +76,7 @@ function UpcomingSessionsTable({ sessions, onSort, sortBy, sortOrder }) {
               onClick={() => handleSort(UPCOMING_SESSIONS_SORT_OPTIONS.STUDENT_ID)}
             >
               <div className="flex items-center">
-                Student ID
+                Student Name
                 {getSortIcon(UPCOMING_SESSIONS_SORT_OPTIONS.STUDENT_ID)}
               </div>
             </th>
@@ -105,30 +105,33 @@ function UpcomingSessionsTable({ sessions, onSort, sortBy, sortOrder }) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {sessions.map((session) => {
-            const probability = (session.reschedule_probability || 0) * 100 // Convert to percentage
+            // reschedule_probability is 0-1 from API, convert to percentage for display/comparison
+            const probabilityPercent = (session.reschedule_probability || 0) * 100
             return (
               <tr key={session.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{session.tutor_name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{session.student_id}</div>
+                  <div className="text-sm text-gray-900">
+                    {session.student_name || session.student_id}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{formatDateTime(session.scheduled_time)}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`text-sm font-semibold ${
-                    probability >= 35 ? 'text-red-600' :
-                    probability >= 15 ? 'text-yellow-600' :
+                    probabilityPercent >= 35 ? 'text-red-600' :
+                    probabilityPercent >= 15 ? 'text-yellow-600' :
                     'text-green-600'
                   }`}>
-                    {formatPercentage(probability)}
+                    {formatRescheduleProbability(session.reschedule_probability)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <RiskBadge 
-                    rate={probability} 
+                    rate={probabilityPercent} 
                     size="small"
                     threshold={35} // Use higher threshold for reschedule predictions (35% vs 15%)
                   />

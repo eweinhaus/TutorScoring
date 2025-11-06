@@ -11,6 +11,45 @@ export const formatPercentage = (value) => {
 }
 
 /**
+ * Format reschedule probability with special handling for high values
+ * @param {number|string} probability - Reschedule probability (0-1 or percentage 0-100)
+ * @param {number} decimals - Number of decimal places (default: 1)
+ * @returns {string} Formatted probability (e.g., ">40%", "23.5%")
+ */
+export const formatRescheduleProbability = (probability, decimals = 1) => {
+  if (probability === null || probability === undefined || probability === '') {
+    return 'N/A'
+  }
+  
+  // Convert to number (handle both 0-1 and 0-100 formats)
+  let value = parseFloat(probability)
+  
+  // If value is > 1, assume it's already a percentage (0-100), otherwise assume 0-1
+  if (value > 1) {
+    value = value / 100
+  }
+  
+  // Check if conversion resulted in NaN
+  if (isNaN(value)) {
+    return 'N/A'
+  }
+  
+  // Clamp value to 0-1 range
+  value = Math.max(0, Math.min(1, value))
+  
+  // Convert to percentage
+  const percent = value * 100
+  
+  // Show ">40%" for values >= 40%
+  if (percent >= 40) {
+    return '>40%'
+  }
+  
+  // Return formatted percentage with specified decimals
+  return `${percent.toFixed(decimals)}%`
+}
+
+/**
  * Format a date as a readable date string
  * @param {string|Date} date - Date to format
  * @returns {string} Formatted date (e.g., "Jan 15, 2024")

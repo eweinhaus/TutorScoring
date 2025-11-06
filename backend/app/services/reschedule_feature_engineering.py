@@ -159,8 +159,21 @@ def extract_session_context_features(session: SessionModel, db: Session) -> Dict
     else:
         features['student_reschedule_rate'] = 0.0  # First-time student
     
-    # Session duration (if available)
-    features['session_duration_minutes'] = float(session.duration_minutes) if session.duration_minutes else 60.0  # Default 60 minutes
+    # Session duration (binned to reduce dominance and prevent overfitting)
+    # Raw duration has too much influence - bin it to reduce memorization
+    duration = float(session.duration_minutes) if session.duration_minutes else 60.0
+    if duration < 45:
+        features['session_duration_category'] = 0.0  # Short (<45 min)
+    elif duration < 60:
+        features['session_duration_category'] = 1.0  # Standard (45-60 min)
+    elif duration < 90:
+        features['session_duration_category'] = 2.0  # Long (60-90 min)
+    else:
+        features['session_duration_category'] = 3.0  # Very long (>90 min)
+    
+    # Also include normalized duration (0-1 scale) for some signal
+    # But with much less weight than before
+    features['session_duration_normalized'] = min(1.0, duration / 120.0)  # Normalize to 0-1, cap at 120 min
     
     # Count consecutive sessions on same day
     session_date = session.scheduled_time.date()

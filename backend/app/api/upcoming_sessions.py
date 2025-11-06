@@ -54,7 +54,9 @@ async def get_upcoming_sessions(
         
         # Build base query with eager loading
         from app.models.tutor import Tutor
+        from app.models.student import Student
         from sqlalchemy.orm import joinedload
+        import uuid
         
         query = db.query(SessionModel).options(
             joinedload(SessionModel.tutor)
@@ -84,11 +86,13 @@ async def get_upcoming_sessions(
         total = query.count()
         
         # Apply sorting - handle different sort fields
-        # Note: We'll sort in memory for reschedule_probability and tutor_name to avoid complex joins
+        # Note: We'll sort in memory for reschedule_probability, tutor_name, and student_name/student_id to avoid complex joins
         if sort_by == "scheduled_time":
             sort_column = SessionModel.scheduled_time
         elif sort_by == "student_id":
-            sort_column = SessionModel.student_id
+            # Sort by student_name when available, fallback to student_id
+            # Will sort in memory after fetching student names
+            sort_column = SessionModel.scheduled_time
         elif sort_by == "reschedule_probability":
             # For probability sorting, we'll need to join predictions
             # But we'll handle this after fetching to avoid query complexity
@@ -96,6 +100,10 @@ async def get_upcoming_sessions(
         elif sort_by == "tutor_name":
             # Tutor is already loaded via joinedload, sort by session time for now
             # Will sort in memory by tutor name
+            sort_column = SessionModel.scheduled_time
+        elif sort_by == "student_name":
+            # Student name requires lookup, sort by session time for now
+            # Will sort in memory by student name
             sort_column = SessionModel.scheduled_time
         else:
             sort_column = SessionModel.scheduled_time
@@ -107,10 +115,10 @@ async def get_upcoming_sessions(
         
         # Apply pagination - fetch more than needed if we need to sort in memory
         # For simple sorts, use normal pagination
-        if sort_by in ["scheduled_time", "student_id"]:
+        if sort_by == "scheduled_time":
             sessions = query.offset(offset).limit(limit).all()
         else:
-            # For complex sorts (probability, tutor_name), fetch all then sort
+            # For complex sorts (probability, tutor_name, student_name, student_id), fetch all then sort
             sessions = query.all()
         
         # For each session, get or create prediction
@@ -126,7 +134,24 @@ async def get_upcoming_sessions(
             
             # Get or create prediction
             try:
-                prediction = get_or_create_prediction(session, tutor_stats, db)
+                # Check if we need to refresh (if model version changed)
+                from app.services.reschedule_prediction_service import load_model
+                _, _, _, metadata = load_model()
+                current_model_version = metadata.get('model_version', 'v1.0')
+                
+                # Check existing prediction
+                from app.models.session_reschedule_prediction import SessionReschedulePrediction
+                existing_pred = db.query(SessionReschedulePrediction).filter(
+                    SessionReschedulePrediction.session_id == session.id
+                ).first()
+                
+                # Force refresh if model version changed or prediction doesn't exist
+                force_refresh = (
+                    existing_pred is None or 
+                    existing_pred.model_version != current_model_version
+                )
+                
+                prediction = get_or_create_prediction(session, tutor_stats, db, force_refresh=force_refresh)
                 reschedule_probability = float(prediction.reschedule_probability)
                 risk_level_value = prediction.risk_level
                 predicted_at = prediction.predicted_at
@@ -137,11 +162,24 @@ async def get_upcoming_sessions(
                 risk_level_value = 'low'
                 predicted_at = datetime.utcnow()
             
+            # Try to get student name if student_id is a valid UUID
+            student_name = None
+            try:
+                # Try to parse student_id as UUID
+                student_uuid = uuid.UUID(session.student_id)
+                student = db.query(Student).filter(Student.id == student_uuid).first()
+                if student:
+                    student_name = student.name
+            except (ValueError, TypeError):
+                # student_id is not a valid UUID, skip lookup
+                pass
+            
             result_sessions.append({
                 "id": str(session.id),
                 "tutor_id": str(session.tutor_id),
                 "tutor_name": tutor.name if tutor else "Unknown",
                 "student_id": session.student_id,
+                "student_name": student_name,
                 "scheduled_time": session.scheduled_time.isoformat(),
                 "status": session.status,
                 "reschedule_probability": reschedule_probability,
@@ -160,9 +198,15 @@ async def get_upcoming_sessions(
                 key=lambda x: x["tutor_name"] or "",
                 reverse=(sort_order.lower() == "desc")
             )
+        elif sort_by == "student_id" or sort_by == "student_name":
+            # Sort by student_name when available, fallback to student_id
+            result_sessions.sort(
+                key=lambda x: x.get("student_name") or x.get("student_id") or "",
+                reverse=(sort_order.lower() == "desc")
+            )
         
         # Apply pagination if we sorted in memory
-        if sort_by not in ["scheduled_time", "student_id"]:
+        if sort_by != "scheduled_time":
             result_sessions = result_sessions[offset:offset + limit]
         
         return {

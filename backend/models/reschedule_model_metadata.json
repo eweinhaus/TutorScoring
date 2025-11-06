@@ -1,14 +1,38 @@
 {
-  "model_version": "v1.0",
-  "trained_at": "2025-11-06T02:29:33.627625",
+  "model_version": "v2.2",
+  "trained_at": "2025-11-06T17:41:56.977658",
   "metrics": {
-    "accuracy": 0.9915966386554622,
-    "precision": 0.9479166666666666,
-    "recall": 1.0,
-    "f1_score": 0.9732620320855615,
-    "roc_auc": 0.9975798011512297
+    "accuracy": 0.9264538198403649,
+    "precision": 0.8109452736318408,
+    "recall": 0.6417322834645669,
+    "f1_score": 0.7164835164835165,
+    "roc_auc": 0.9431299212598425,
+    "prediction_distribution": {
+      "mean": 0.14758956792895234,
+      "min": 0.019422815847054513,
+      "max": 0.9477588095546331,
+      "std": 0.2504733213929684
+    },
+    "risk_level_distribution": {
+      "low": 1396,
+      "medium": 110,
+      "high": 248
+    },
+    "base_metrics": {
+      "accuracy": 0.9224629418472063,
+      "precision": 0.75,
+      "recall": 0.6968503937007874,
+      "f1_score": 0.7224489795918367,
+      "roc_auc": 0.9422847769028871
+    }
   },
-  "feature_count": 22,
-  "training_samples": 22,
-  "reschedule_rate": 0.15275908479138628
+  "feature_count": 23,
+  "training_samples": 23,
+  "reschedule_rate": 0.14471433458775232,
+  "has_scaler": true,
+  "has_calibrator": true,
+  "prediction_clip_range": [
+    0.01,
+    0.4
+  ]
 }

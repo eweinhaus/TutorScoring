@@ -15,11 +15,20 @@ fi
 
 # Get API key from AWS Secrets Manager
 echo "Fetching API key from AWS Secrets Manager..."
-API_KEY=$(aws secretsmanager get-secret-value \
-    --secret-id ${PROJECT_NAME}-secrets \
-    --region $REGION \
-    --query 'SecretString' \
-    --output text 2>/dev/null | jq -r '.API_KEY // empty')
+if [ -z "$APP_SECRET_ARN" ]; then
+    echo "⚠️  APP_SECRET_ARN not set, trying alternative method..."
+    API_KEY=$(aws secretsmanager get-secret-value \
+        --secret-id ${PROJECT_NAME}-secrets \
+        --region $REGION \
+        --query 'SecretString' \
+        --output text 2>/dev/null | jq -r '.API_KEY // empty' 2>/dev/null || echo "")
+else
+    API_KEY=$(aws secretsmanager get-secret-value \
+        --secret-id "$APP_SECRET_ARN" \
+        --region $REGION \
+        --query 'SecretString' \
+        --output text 2>/dev/null | jq -r '.API_KEY // empty' 2>/dev/null || echo "")
+fi
 
 if [ -z "$API_KEY" ]; then
     echo "⚠️  Warning: API_KEY not found in Secrets Manager"
@@ -29,15 +38,15 @@ fi
 
 # Build frontend
 cd ../../frontend
-# Set VITE_API_URL to ALB
-# Note: Change to https:// if your ALB has HTTPS listener configured
-# If CloudFront proxies /api/* to ALB, you can comment this out to use relative URLs
-echo "VITE_API_URL=http://${ALB_DNS}" > .env.production
+# Don't set VITE_API_URL - use relative URLs so requests go through CloudFront
+# CloudFront proxies /api/* to ALB, so relative URLs work perfectly
+# This avoids CORS and mixed content issues
 if [ -n "$API_KEY" ]; then
-    echo "VITE_API_KEY=${API_KEY}" >> .env.production
+    echo "VITE_API_KEY=${API_KEY}" > .env.production
     echo "✅ API key configured in build"
 else
     echo "⚠️  Building without API key - API requests will fail"
+    touch .env.production  # Create empty file so build doesn't fail
 fi
 
 if [ ! -d "node_modules" ]; then
