@@ -21,6 +21,14 @@ function Dashboard() {
         highRiskCount: 0,
         averageRescheduleRate: 0,
         averageRescheduleRate90d: 0,
+        totalSessions30d: 0,
+        totalReschedules30d: 0,
+        lowRiskCount: 0,
+        avgSessionsPerTutor30d: 0,
+        highRiskPercentage: 0,
+        lowRiskPercentage: 0,
+        bestPerformer: null,
+        mostActive: null,
       }
     }
 
@@ -45,11 +53,59 @@ function Dashboard() {
     }, 0)
     const averageRescheduleRate90d = totalTutors > 0 ? totalRate90d / totalTutors : 0
 
+    // Calculate total sessions and reschedules (30d)
+    const totalSessions30d = tutors.reduce((sum, tutor) => {
+      return sum + (tutor.total_sessions_30d || tutor.tutor_score?.total_sessions_30d || 0)
+    }, 0)
+
+    const totalReschedules30d = tutors.reduce((sum, tutor) => {
+      return sum + (tutor.tutor_reschedules_30d || tutor.tutor_score?.tutor_reschedules_30d || 0)
+    }, 0)
+
+    // Calculate low risk count
+    const lowRiskCount = totalTutors - highRiskCount
+
+    // Calculate average sessions per tutor (30d)
+    const avgSessionsPerTutor30d = totalTutors > 0 ? Math.round(totalSessions30d / totalTutors) : 0
+
+    // Calculate risk percentages
+    const highRiskPercentage = totalTutors > 0 ? (highRiskCount / totalTutors) * 100 : 0
+    const lowRiskPercentage = totalTutors > 0 ? (lowRiskCount / totalTutors) * 100 : 0
+
+    // Find best and worst performing tutors
+    const tutorsWithRates = tutors
+      .map(tutor => ({
+        tutor,
+        rate: tutor.reschedule_rate_30d || tutor.tutor_score?.reschedule_rate_30d || 0,
+        sessions: tutor.total_sessions_30d || tutor.tutor_score?.total_sessions_30d || 0
+      }))
+      .filter(t => t.sessions > 0) // Only tutors with sessions
+
+    const bestPerformer = tutorsWithRates.length > 0
+      ? tutorsWithRates.reduce((best, current) => 
+          current.rate < best.rate ? current : best
+        )
+      : null
+
+    const mostActive = tutorsWithRates.length > 0
+      ? tutorsWithRates.reduce((most, current) => 
+          current.sessions > most.sessions ? current : most
+        )
+      : null
+
     return {
       totalTutors,
       highRiskCount,
       averageRescheduleRate,
       averageRescheduleRate90d,
+      totalSessions30d,
+      totalReschedules30d,
+      lowRiskCount,
+      avgSessionsPerTutor30d,
+      highRiskPercentage,
+      lowRiskPercentage,
+      bestPerformer,
+      mostActive,
     }
   }, [data])
 
@@ -111,38 +167,112 @@ function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="card mb-8">
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-4">
-          <Link
-            to="/tutors"
-            className="btn btn-primary"
-          >
-            View All Tutors
-          </Link>
-          <Link
-            to={`/tutors?risk_status=${RISK_STATUS.HIGH}`}
-            className="btn btn-secondary"
-          >
-            View High-Risk Tutors
-          </Link>
+      <div className="card mb-8 py-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Quick Actions</h2>
+          <div className="flex flex-wrap gap-4">
+            <Link
+              to="/tutors"
+              className="btn btn-primary"
+            >
+              View All Tutors
+            </Link>
+            <Link
+              to={`/tutors?risk_status=${RISK_STATUS.HIGH}`}
+              className="btn btn-secondary"
+            >
+              View High-Risk Tutors
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Recent Activity Section */}
-      <div className="card">
-        <h2 className="text-xl font-semibold mb-4">System Status</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Summary Statistics Section */}
+      <div className="card mb-8">
+        <h2 className="text-xl font-semibold mb-4">Summary Statistics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Total Tutors Monitored</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalTutors}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">High-Risk Threshold</p>
+            <p className="text-sm text-gray-600 mb-1">Total Sessions (30d)</p>
             <p className="text-2xl font-bold text-gray-900">
-              {RISK_THRESHOLD}%
+              {stats.totalSessions30d.toLocaleString()}
             </p>
           </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Total Reschedules (30d)</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {stats.totalReschedules30d.toLocaleString()}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Low Risk Tutors</p>
+            <p className="text-2xl font-bold text-green-600">
+              {stats.lowRiskCount}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Avg Sessions/Tutor (30d)</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {stats.avgSessionsPerTutor30d}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Risk Overview Section */}
+      <div className="card">
+        <h2 className="text-xl font-semibold mb-4">Risk Overview</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-600">High Risk</p>
+              <p className="text-lg font-bold text-red-600">{stats.highRiskCount}</p>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-red-600 h-2 rounded-full transition-all"
+                style={{ width: `${stats.highRiskPercentage}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{stats.highRiskPercentage.toFixed(1)}% of tutors</p>
+          </div>
+          
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-600">Low Risk</p>
+              <p className="text-lg font-bold text-green-600">{stats.lowRiskCount}</p>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-green-600 h-2 rounded-full transition-all"
+                style={{ width: `${stats.lowRiskPercentage}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{stats.lowRiskPercentage.toFixed(1)}% of tutors</p>
+          </div>
+
+          {stats.bestPerformer && (
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Best Performer</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {stats.bestPerformer.tutor.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {formatPercentage(stats.bestPerformer.rate)} reschedule rate
+              </p>
+            </div>
+          )}
+
+          {stats.mostActive && (
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Most Active</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {stats.mostActive.tutor.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {stats.mostActive.sessions} sessions (30d)
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

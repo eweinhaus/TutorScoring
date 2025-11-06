@@ -68,8 +68,17 @@ if ! aws s3api head-bucket --bucket $BUCKET_NAME --region $REGION 2>/dev/null; t
     fi
 fi
 
-# Upload files
+# Upload files (S3 sync automatically sets content types, but we'll ensure CSS is correct)
 aws s3 sync dist/ s3://$BUCKET_NAME --delete --region $REGION
+
+# Fix content-type for CSS files if needed
+for css_file in $(aws s3 ls s3://$BUCKET_NAME/assets/ --region $REGION --recursive | grep "\.css$" | awk '{print $4}'); do
+    aws s3 cp "s3://$BUCKET_NAME/$css_file" "s3://$BUCKET_NAME/$css_file" \
+        --content-type "text/css" \
+        --cache-control "public, max-age=31536000, immutable" \
+        --metadata-directive REPLACE \
+        --region $REGION > /dev/null 2>&1 || true
+done
 
 # Create CloudFront distribution
 EXISTING_DIST=$(aws cloudfront list-distributions --region $REGION --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, '${BUCKET_NAME}.s3')].Id" --output text 2>/dev/null | head -n1)
