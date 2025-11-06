@@ -395,7 +395,19 @@ components/
 
 ## Deployment Patterns
 
-### AWS Deployment (Complete)
+### AWS Deployment (Complete & Operational)
+
+**Live Application:**
+- **Frontend:** https://d2iu6aqgs7qt5d.cloudfront.net
+- **API:** https://d2iu6aqgs7qt5d.cloudfront.net/api/*
+- **Health Check:** https://d2iu6aqgs7qt5d.cloudfront.net/api/health
+- **CloudFront Distribution ID:** E2QYT9M6FQCEY
+- **Status:** All services healthy and operational
+
+**Recent Updates (November 6, 2025):**
+- CloudFront cache invalidation completed (ID: ICBM8R9NJO3U3QEGYU8FKDNJ9F)
+- Fixed stale JavaScript file serving issue
+- Local environment cleaned up (stale processes removed)
 
 **Infrastructure:**
 - **Frontend:** S3 bucket → CloudFront CDN → HTTPS endpoint

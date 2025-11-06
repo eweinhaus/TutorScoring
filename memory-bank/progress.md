@@ -1,7 +1,7 @@
 # Progress
 ## Tutor Quality Scoring System
 
-**Last Updated:** Matching Service Implementation Complete
+**Last Updated:** Production Deployment Complete, System Operational
 
 ---
 
@@ -384,8 +384,9 @@ See `MANUAL_TESTING_MATCHING_SERVICE.md` for testing instructions.
 
 ### Phase 8: Deployment
 
-**Status:** ✅ AWS Deployment Complete  
-**Priority:** High (Demo Requirement)
+**Status:** ✅ AWS Deployment Complete & Operational  
+**Priority:** High (Demo Requirement)  
+**Live Application:** https://d2iu6aqgs7qt5d.cloudfront.net
 
 **AWS Deployment (Complete):**
 - [x] Set up AWS VPC with subnets (or use default with fallback)
@@ -428,16 +429,18 @@ See `MANUAL_TESTING_MATCHING_SERVICE.md` for testing instructions.
 - [ ] Test deployed system end-to-end
 
 **AWS Infrastructure Details:**
-- **Frontend URL:** https://d2iu6aqgs7qt5d.cloudfront.net
-- **API URL:** https://d2iu6aqgs7qt5d.cloudfront.net/api/*
+- **Frontend URL:** https://d2iu6aqgs7qt5d.cloudfront.net (LIVE)
+- **API URL:** https://d2iu6aqgs7qt5d.cloudfront.net/api/* (LIVE)
+- **Health Check:** https://d2iu6aqgs7qt5d.cloudfront.net/api/health (LIVE)
 - **Direct ALB:** http://tutor-scoring-alb-2067881445.us-east-1.elb.amazonaws.com
 - **Region:** us-east-1
-- **Database:** RDS PostgreSQL 14.19 (tutor-scoring-db)
+- **Database:** RDS PostgreSQL 14.19 (tutor-scoring-db) - 100 tutors seeded
 - **Cache:** ElastiCache Redis cluster
 - **Container Registry:** ECR (tutor-scoring-api, tutor-scoring-worker)
-- **Compute:** ECS Fargate (serverless containers)
-- **CDN:** CloudFront distribution
+- **Compute:** ECS Fargate (serverless containers) - 1/1 tasks healthy
+- **CDN:** CloudFront distribution (E2QYT9M6FQCEY) - cache invalidated Nov 6, 2025
 - **Storage:** S3 bucket (tutor-scoring-frontend)
+- **Status:** All services operational, recent CloudFront cache fix applied
 
 **Deployment Scripts Location:**
 - `scripts/aws_deploy/` - All deployment automation scripts

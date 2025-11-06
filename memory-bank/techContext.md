@@ -412,7 +412,27 @@ npm test  # If configured
 
 ## Deployment
 
-### Render Deployment (Partial - Attempted)
+### AWS Deployment (Complete & Operational)
+
+**Live Application:**
+- **Frontend:** https://d2iu6aqgs7qt5d.cloudfront.net
+- **API:** https://d2iu6aqgs7qt5d.cloudfront.net/api/*
+- **Health Check:** https://d2iu6aqgs7qt5d.cloudfront.net/api/health
+
+**Infrastructure Status:**
+- ✅ ECS Fargate: Running (1/1 tasks healthy)
+- ✅ RDS PostgreSQL: Operational (100 tutors seeded)
+- ✅ ElastiCache Redis: Connected
+- ✅ CloudFront: Serving correct files (cache invalidated Nov 6, 2025)
+- ✅ ALB: Healthy and routing traffic
+- ✅ S3: Frontend files deployed
+
+**Deployment Scripts:**
+- Location: `scripts/aws_deploy/`
+- Main script: `auto_deploy.sh` (fully automated)
+- All infrastructure scripts available and tested
+
+### Render Deployment (Partial - Historical)
 
 **Status:** Partially deployed - API, Worker, Frontend, and Database are LIVE. Redis connection pending.
 
@@ -552,12 +572,28 @@ npm test  # If configured
 
 ### Required Services
 - **SendGrid** (or AWS SES) - Email delivery
-- **Render** - Hosting and infrastructure
+- **AWS** - Production hosting and infrastructure (deployed)
 - **GitHub** - Version control (assumed)
 
 ### Optional Services
-- **OpenAI API** - Future AI features (Phase 2+)
-- **Monitoring** - Application monitoring (future)
+- **OpenAI API** - AI features (Matching Service uses GPT-4 for explanations)
+- **CloudWatch** - Application monitoring (AWS deployment)
+
+### Performance Testing Scripts
+
+**Location:** `scripts/performance_test/` and `scripts/load_test/`
+
+**Available Scripts:**
+- `api_performance.py` - API endpoint performance testing
+- `database_performance.py` - Database query performance
+- `frontend_performance.py` - Frontend load time testing
+- `session_load.py` - Session ingestion load testing
+- `k6_session_load.js` - K6 load testing script
+- `run_all_performance_tests.sh` - Run all performance tests
+
+**Documentation:**
+- `scripts/load_test/README.md` - Load testing guide
+- `scripts/load_test/SETUP_INSTRUCTIONS.md` - Setup instructions
 
 ---
 

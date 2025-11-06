@@ -1,5 +1,20 @@
 # Tutor Quality Scoring System - MVP
 
+## 🌐 Live Application
+
+**Deployed Application:** [https://d2iu6aqgs7qt5d.cloudfront.net](https://d2iu6aqgs7qt5d.cloudfront.net)
+
+- **Frontend:** https://d2iu6aqgs7qt5d.cloudfront.net
+- **API Endpoint:** https://d2iu6aqgs7qt5d.cloudfront.net/api/*
+- **API Health Check:** https://d2iu6aqgs7qt5d.cloudfront.net/api/health
+- **Infrastructure:** AWS (CloudFront, S3, ALB, RDS, ElastiCache)
+
+**Note:** If you see cached content, perform a hard refresh:
+- **Mac:** `Cmd + Shift + R`
+- **Windows/Linux:** `Ctrl + Shift + R`
+
+---
+
 Automated system that evaluates tutor performance, identifies retention risks, and provides actionable insights to reduce churn. The MVP focuses on detecting high reschedule rates with a clean dashboard interface and automated reporting.
 
 ## 🎯 Project Overview
