@@ -4,16 +4,23 @@ import { getStudents, getTutors } from '../services/matchingApi'
 import StudentList from '../components/matching/StudentList'
 import TutorList from '../components/matching/TutorList'
 import MatchDetailModal from '../components/matching/MatchDetailModal'
+import MatchingAlgorithmModal from '../components/matching/MatchingAlgorithmModal'
+import MatchingResultsModal from '../components/matching/MatchingResultsModal'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 
 /**
  * Matching Dashboard page for exploring student-tutor matches.
+ * Main page handles 1-to-1 comparison, with a button to open matching algorithm modal.
  */
 function MatchingDashboard() {
+  // Single-select for compatibility modal
   const [selectedStudentId, setSelectedStudentId] = useState(null)
   const [selectedTutorId, setSelectedTutorId] = useState(null)
   const [matchModalOpen, setMatchModalOpen] = useState(false)
+  const [algorithmModalOpen, setAlgorithmModalOpen] = useState(false)
+  const [resultsModalOpen, setResultsModalOpen] = useState(false)
+  const [matchingResults, setMatchingResults] = useState(null)
 
   // Fetch students
   const {
@@ -60,13 +67,28 @@ function MatchingDashboard() {
     // setSelectedTutorId(null)
   }
 
+  const handleResultsReady = (results) => {
+    setMatchingResults(results)
+    setResultsModalOpen(true)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Matching Dashboard</h1>
-        <p className="text-gray-600">
-          Select a student and tutor to view match predictions and compatibility analysis. The match details will open in a popup.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Matching Dashboard</h1>
+            <p className="text-gray-600">
+              Click on a student and tutor card to view match predictions and compatibility analysis.
+            </p>
+          </div>
+          <button
+            onClick={() => setAlgorithmModalOpen(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all"
+          >
+            Matching Algorithm
+          </button>
+        </div>
       </div>
 
       {/* Loading state */}
@@ -124,6 +146,23 @@ function MatchingDashboard() {
         tutorId={selectedTutorId}
         isOpen={matchModalOpen}
         onClose={handleCloseMatchModal}
+      />
+
+      {/* Matching Algorithm Modal */}
+      <MatchingAlgorithmModal
+        isOpen={algorithmModalOpen}
+        onClose={() => setAlgorithmModalOpen(false)}
+        onResultsReady={handleResultsReady}
+      />
+
+      {/* Matching Results Modal */}
+      <MatchingResultsModal
+        isOpen={resultsModalOpen}
+        onClose={() => {
+          setResultsModalOpen(false)
+          setMatchingResults(null)
+        }}
+        results={matchingResults}
       />
     </div>
   )

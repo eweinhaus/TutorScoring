@@ -1,0 +1,19 @@
+[
+  "age_difference",
+  "communication_mismatch",
+  "compatibility_score",
+  "pace_mismatch",
+  "student_age",
+  "student_experience",
+  "student_pace",
+  "student_satisfaction",
+  "student_urgency",
+  "style_mismatch",
+  "tutor_age",
+  "tutor_confidence",
+  "tutor_experience",
+  "tutor_is_high_risk",
+  "tutor_pace",
+  "tutor_reschedule_rate_30d",
+  "tutor_total_sessions_30d"
+]

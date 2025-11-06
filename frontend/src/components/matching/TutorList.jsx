@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import TutorDetailModal from './TutorDetailModal'
 
-function TutorList({ tutors, selectedId, onSelect }) {
+function TutorList({ tutors, selectedId, selectedIds, onSelect, onToggleSelect }) {
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedTutorId, setSelectedTutorId] = useState(null)
 
@@ -16,18 +16,34 @@ function TutorList({ tutors, selectedId, onSelect }) {
     setSelectedTutorId(null)
   }
 
+  const handleCardClick = (tutorId) => {
+    // If onToggleSelect is provided, use card click for multi-select
+    // Otherwise, use for single-select compatibility modal
+    if (onToggleSelect) {
+      onToggleSelect(tutorId)
+    } else if (onSelect) {
+      onSelect(tutorId)
+    }
+  }
+
   return (
     <>
       <div className="space-y-2">
-        {tutors.map((tutor) => (
+        {tutors.map((tutor) => {
+          const isMultiSelected = selectedIds?.includes(tutor.id)
+          const isSingleSelected = selectedId === tutor.id
+          // Show blue border for single-select (compatibility modal), green for multi-select
+          const borderClass = isSingleSelected 
+            ? 'border-blue-500 bg-blue-50'
+            : isMultiSelected
+            ? 'border-green-400 bg-green-50'
+            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+          
+          return (
           <div
             key={tutor.id}
-            onClick={() => onSelect(tutor.id)}
-            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-              selectedId === tutor.id
-                ? 'border-primary bg-primary/10'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
+            onClick={() => handleCardClick(tutor.id)}
+            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass}`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -45,7 +61,8 @@ function TutorList({ tutors, selectedId, onSelect }) {
               </button>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
       <TutorDetailModal
         tutorId={selectedTutorId}

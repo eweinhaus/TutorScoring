@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import StudentDetailModal from './StudentDetailModal'
 
-function StudentList({ students, selectedId, onSelect }) {
+function StudentList({ students, selectedId, selectedIds, onSelect, onToggleSelect }) {
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState(null)
 
@@ -16,18 +16,34 @@ function StudentList({ students, selectedId, onSelect }) {
     setSelectedStudentId(null)
   }
 
+  const handleCardClick = (studentId) => {
+    // If onToggleSelect is provided, use card click for multi-select
+    // Otherwise, use for single-select compatibility modal
+    if (onToggleSelect) {
+      onToggleSelect(studentId)
+    } else if (onSelect) {
+      onSelect(studentId)
+    }
+  }
+
   return (
     <>
       <div className="space-y-2">
-        {students.map((student) => (
+        {students.map((student) => {
+          const isMultiSelected = selectedIds?.includes(student.id)
+          const isSingleSelected = selectedId === student.id
+          // Show blue border for single-select (compatibility modal), green for multi-select
+          const borderClass = isSingleSelected 
+            ? 'border-blue-500 bg-blue-50'
+            : isMultiSelected
+            ? 'border-green-400 bg-green-50'
+            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+          
+          return (
           <div
             key={student.id}
-            onClick={() => onSelect(student.id)}
-            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-              selectedId === student.id
-                ? 'border-primary bg-primary/10'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
+            onClick={() => handleCardClick(student.id)}
+            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass}`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -45,7 +61,8 @@ function StudentList({ students, selectedId, onSelect }) {
               </button>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
       <StudentDetailModal
         studentId={selectedStudentId}
