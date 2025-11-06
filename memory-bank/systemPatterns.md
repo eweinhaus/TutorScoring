@@ -106,6 +106,7 @@ tutors (1) ──< (1) tutor_scores
 sessions (1) ──< (0 or 1) email_reports
 students (1) ──< (many) match_predictions
 tutors (1) ──< (many) match_predictions
+sessions (1) ──< (0 or 1) session_reschedule_predictions
 ```
 
 ### Key Design Patterns

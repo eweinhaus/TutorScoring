@@ -637,10 +637,19 @@ All environment setup tasks completed:
 
 ### Immediate (Next Phase)
 
-1. **Data Foundation** (PRD_Data_Foundation.md)
-   - Design database schema
-   - Create SQLAlchemy models
-   - Set up Alembic migrations
+1. **Reschedule Prediction Model Retraining** (High Priority)
+   - Retrain model with proper feature scaling (StandardScaler/MinMaxScaler)
+   - Reduce overfitting (max_depth 3-4, early stopping, better regularization)
+   - Recalibrate predictions (Platt scaling/isotonic regression)
+   - Validate predictions match expected distribution (5-25% range)
+   - Update dashboard with improved model
+   - Script: `scripts/train_reschedule_model.py`
+   - Documentation: `docs/RESCHEDULE_MODEL_ISSUES_ANALYSIS.md`
+
+2. **Data Foundation** (PRD_Data_Foundation.md) - ✅ COMPLETE
+   - Design database schema ✅
+   - Create SQLAlchemy models ✅
+   - Set up Alembic migrations ✅
 
 ### Short-Term (Week 1)
 

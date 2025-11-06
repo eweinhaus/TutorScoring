@@ -243,6 +243,16 @@ TutorScoring/
 - error_message (TEXT)
 - created_at (TIMESTAMP)
 
+**session_reschedule_predictions:**
+- id (UUID, PK)
+- session_id (UUID, FK → sessions, unique)
+- reschedule_probability (NUMERIC 5,4: 0.0000 to 1.0000)
+- risk_level (VARCHAR: low/medium/high)
+- model_version (VARCHAR)
+- predicted_at (TIMESTAMP)
+- features_json (JSON)
+- created_at, updated_at (TIMESTAMP)
+
 ---
 
 ## API Endpoints (Implemented)
@@ -280,6 +290,25 @@ TutorScoring/
 **GET /api/health**
 - System health check
 - Returns: Status of database, Redis, version
+- Status: ✅ Implemented and working
+
+### Upcoming Sessions Endpoints ✅
+
+**GET /api/upcoming-sessions**
+- List upcoming sessions with reschedule predictions
+- Query params: days_ahead, risk_level, tutor_id, limit, offset, sort_by, sort_order
+- Returns: Paginated list of upcoming sessions with predictions
+- Status: ✅ Implemented and working
+
+**POST /api/upcoming-sessions/batch-predict**
+- Generate predictions for multiple sessions
+- Body: session_ids (optional), days_ahead (optional)
+- Returns: Batch prediction results
+- Status: ✅ Implemented and working
+
+**POST /api/upcoming-sessions/{session_id}/refresh**
+- Refresh prediction for specific session
+- Returns: Updated prediction
 - Status: ✅ Implemented and working
 
 ---
