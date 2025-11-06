@@ -28,7 +28,7 @@ function TutorList({ tutors, selectedId, selectedIds, onSelect, onToggleSelect }
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-1">
         {tutors.map((tutor) => {
           const isMultiSelected = selectedIds?.includes(tutor.id)
           const isSingleSelected = selectedId === tutor.id
@@ -43,21 +43,23 @@ function TutorList({ tutors, selectedId, selectedIds, onSelect, onToggleSelect }
           <div
             key={tutor.id}
             onClick={() => handleCardClick(tutor.id)}
-            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass}`}
+            className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${borderClass}`}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="font-medium">{tutor.name}</div>
-                <div className="text-sm text-gray-600">
-                  {tutor.experience_years ? `${tutor.experience_years} years exp` : 'New tutor'} • {tutor.teaching_style || 'N/A'}
-                </div>
+                {tutor.experience_years && (
+                  <div className="text-xs text-gray-500">
+                    {tutor.experience_years} years exp
+                  </div>
+                )}
               </div>
               <button
                 onClick={(e) => handleViewDetails(e, tutor.id)}
                 className="ml-2 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
                 title="View full profile"
               >
-                View Details
+                Details
               </button>
             </div>
           </div>

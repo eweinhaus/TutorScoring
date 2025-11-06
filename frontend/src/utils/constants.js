@@ -55,3 +55,23 @@ export const API_ENDPOINTS = {
  */
 export const DEFAULT_PAGE_SIZE = 20
 
+/**
+ * Reschedule risk levels
+ */
+export const RESCHEDULE_RISK_LEVELS = ['low', 'medium', 'high']
+
+/**
+ * Days ahead options for upcoming sessions
+ */
+export const DAYS_AHEAD_OPTIONS = [7, 14, 30]
+
+/**
+ * Sort options for upcoming sessions
+ */
+export const UPCOMING_SESSIONS_SORT_OPTIONS = {
+  SCHEDULED_TIME: 'scheduled_time',
+  RESCHEDULE_PROBABILITY: 'reschedule_probability',
+  TUTOR_NAME: 'tutor_name',
+  STUDENT_ID: 'student_id',
+}
+

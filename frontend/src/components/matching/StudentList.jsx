@@ -28,7 +28,7 @@ function StudentList({ students, selectedId, selectedIds, onSelect, onToggleSele
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-1">
         {students.map((student) => {
           const isMultiSelected = selectedIds?.includes(student.id)
           const isSingleSelected = selectedId === student.id
@@ -43,13 +43,13 @@ function StudentList({ students, selectedId, selectedIds, onSelect, onToggleSele
           <div
             key={student.id}
             onClick={() => handleCardClick(student.id)}
-            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass}`}
+            className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${borderClass}`}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="font-medium">{student.name}</div>
-                <div className="text-sm text-gray-600">
-                  Age {student.age} • Pace {student.preferred_pace}/5 • {student.preferred_teaching_style}
+                <div className="text-xs text-gray-500">
+                  Age {student.age}
                 </div>
               </div>
               <button
@@ -57,7 +57,7 @@ function StudentList({ students, selectedId, selectedIds, onSelect, onToggleSele
                 className="ml-2 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
                 title="View full profile"
               >
-                View Details
+                Details
               </button>
             </div>
           </div>

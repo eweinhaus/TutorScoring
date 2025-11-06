@@ -1,4 +1,5 @@
 import React from 'react'
+import { formatChurnProbability } from '../../utils/formatters'
 
 function MatchingResults({ results, students, tutors }) {
   if (!results || !results.matches || results.matches.length === 0) {
@@ -93,7 +94,7 @@ function MatchingResults({ results, students, tutors }) {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{formatPercent(match.churn_probability)}</div>
+                    <div className="text-sm text-gray-900">{formatChurnProbability(match.churn_probability)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

@@ -24,16 +24,6 @@ function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link
-              to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/')
-                  ? 'bg-primary text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              Dashboard
-            </Link>
-            <Link
               to="/tutors"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/tutors')
@@ -52,6 +42,16 @@ function Header() {
               }`}
             >
               Matching
+            </Link>
+            <Link
+              to="/upcoming-sessions"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/upcoming-sessions')
+                  ? 'bg-primary text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Upcoming Sessions
             </Link>
           </nav>
 
@@ -83,17 +83,6 @@ function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <Link
-              to="/"
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
-                isActive('/')
-                  ? 'bg-primary text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Dashboard
-            </Link>
-            <Link
               to="/tutors"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive('/tutors')
@@ -114,6 +103,17 @@ function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Matching
+            </Link>
+            <Link
+              to="/upcoming-sessions"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive('/upcoming-sessions')
+                  ? 'bg-primary text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Upcoming Sessions
             </Link>
           </div>
         )}

@@ -4,6 +4,7 @@ import { getMatchPrediction, getStudent, getTutor } from '../../services/matchin
 import Modal from '../common/Modal'
 import LoadingSpinner from '../common/LoadingSpinner'
 import ErrorMessage from '../common/ErrorMessage'
+import { formatChurnProbability } from '../../utils/formatters'
 
 function MatchDetailModal({ studentId, tutorId, isOpen, onClose }) {
   // Fetch match prediction
@@ -76,7 +77,7 @@ function MatchDetailModal({ studentId, tutorId, isOpen, onClose }) {
                 </span>
               </div>
               <div className="text-xs text-gray-500">
-                {(parseFloat(matchPrediction.churn_probability) * 100).toFixed(1)}% probability
+                {formatChurnProbability(matchPrediction.churn_probability)} probability
               </div>
             </div>
             <div>

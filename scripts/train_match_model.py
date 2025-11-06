@@ -24,6 +24,7 @@ try:
     import pandas as pd
     from sklearn.model_selection import train_test_split, cross_val_score
     from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.utils.class_weight import compute_sample_weight
     import xgboost as xgb
     import joblib
@@ -45,6 +46,11 @@ def generate_synthetic_training_data(num_samples: int = 1000, target_churn_rate:
     Uses realistic churn distribution: ~10-12% of matches have high churn risk.
     This reflects industry standards where most matches are good, with only
     a small percentage having significant compatibility issues.
+    
+    NOTE: Currently uses synthetic data. To train on real historical churn data:
+    1. Track actual churn outcomes (student-tutor pairs that resulted in churn)
+    2. Query MatchPrediction table with actual outcomes
+    3. Use real features and actual churn labels from database
     
     Args:
         num_samples: Number of student-tutor pairs to generate
@@ -186,8 +192,8 @@ def train_model(X: np.ndarray, y: np.ndarray, feature_names: list) -> tuple:
     # Calculate class weights: more weight to minority class (churn)
     sample_weights = compute_sample_weight('balanced', y_train)
     
-    # Initialize model
-    model = xgb.XGBClassifier(
+    # Initialize base model (uncalibrated)
+    base_model = xgb.XGBClassifier(
         n_estimators=100,
         max_depth=5,
         learning_rate=0.1,
@@ -196,12 +202,44 @@ def train_model(X: np.ndarray, y: np.ndarray, feature_names: list) -> tuple:
         scale_pos_weight=len(y_train[y_train == 0]) / len(y_train[y_train == 1])  # Handle class imbalance
     )
     
-    # Train model with sample weights to handle class imbalance
-    model.fit(X_train, y_train, sample_weight=sample_weights)
+    # Train base model with sample weights to handle class imbalance
+    base_model.fit(X_train, y_train, sample_weight=sample_weights)
+    
+    # Calibrate the model using Platt scaling (logistic regression)
+    # This will make probabilities more realistic and less overconfident
+    print("\nCalibrating model probabilities...")
+    print("  Using Platt scaling (isotonic regression) to reduce overconfidence")
+    model = CalibratedClassifierCV(
+        base_model,
+        method='isotonic',  # Use isotonic regression for better calibration
+        cv=3,  # 3-fold cross-validation for calibration
+        n_jobs=-1
+    )
+    model.fit(X_train, y_train)
     
     # Make predictions
     y_pred = model.predict(X_test)
     y_pred_proba = model.predict_proba(X_test)[:, 1]
+    
+    # Check calibration before/after
+    print("\nChecking probability calibration...")
+    # Get uncalibrated predictions for comparison
+    y_pred_proba_uncalibrated = base_model.predict_proba(X_test)[:, 1]
+    
+    # Calculate calibration metrics
+    def count_extreme_probs(probs, threshold_low=0.01, threshold_high=0.9):
+        """Count extremely confident predictions."""
+        very_low = sum(1 for p in probs if p < threshold_low)
+        very_high = sum(1 for p in probs if p >= threshold_high)
+        return very_low, very_high
+    
+    uncal_low, uncal_high = count_extreme_probs(y_pred_proba_uncalibrated)
+    cal_low, cal_high = count_extreme_probs(y_pred_proba)
+    
+    print(f"  Uncalibrated - Very low (<1%): {uncal_low}/{len(y_test)} ({uncal_low/len(y_test)*100:.1f}%)")
+    print(f"  Uncalibrated - Very high (>=90%): {uncal_high}/{len(y_test)} ({uncal_high/len(y_test)*100:.1f}%)")
+    print(f"  Calibrated - Very low (<1%): {cal_low}/{len(y_test)} ({cal_low/len(y_test)*100:.1f}%)")
+    print(f"  Calibrated - Very high (>=90%): {cal_high}/{len(y_test)} ({cal_high/len(y_test)*100:.1f}%)")
     
     # Calculate metrics
     accuracy = accuracy_score(y_test, y_pred)
@@ -225,8 +263,9 @@ def train_model(X: np.ndarray, y: np.ndarray, feature_names: list) -> tuple:
     print(f"  F1 Score:  {metrics['f1_score']:.4f}")
     print(f"  ROC-AUC:   {metrics['roc_auc']:.4f}")
     
-    # Feature importance
-    feature_importance = dict(zip(feature_names, model.feature_importances_.tolist()))
+    # Feature importance (get from base model)
+    base_model_for_importance = model.calibrated_classifiers_[0].estimator if hasattr(model, 'calibrated_classifiers_') else base_model
+    feature_importance = dict(zip(feature_names, base_model_for_importance.feature_importances_.tolist()))
     print("\nTop 10 Most Important Features:")
     for name, importance in sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:10]:
         print(f"  {name}: {importance:.4f}")
@@ -236,20 +275,20 @@ def train_model(X: np.ndarray, y: np.ndarray, feature_names: list) -> tuple:
 
 def save_model(model, feature_names: list, metrics: dict, model_dir: Path):
     """
-    Save model and metadata to disk.
+    Save trained and calibrated model and metadata to disk.
     
     Args:
-        model: Trained XGBoost model
+        model: Trained and calibrated XGBoost model (CalibratedClassifierCV)
         feature_names: List of feature names
-        metrics: Performance metrics
+        metrics: Model performance metrics
         model_dir: Directory to save model files
     """
     model_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save model
+    # Save model (CalibratedClassifierCV wraps the base model)
     model_path = model_dir / 'match_model.pkl'
     joblib.dump(model, model_path)
-    print(f"\nModel saved to: {model_path}")
+    print(f"\nCalibrated model saved to: {model_path}")
     
     # Save feature names
     feature_names_path = model_dir / 'feature_names.json'
@@ -259,10 +298,12 @@ def save_model(model, feature_names: list, metrics: dict, model_dir: Path):
     
     # Save metadata
     metadata = {
-        'model_version': 'v1.0',
+        'model_version': 'v1.1',  # Updated version for calibrated model
         'trained_at': datetime.utcnow().isoformat(),
         'metrics': metrics,
         'feature_count': len(feature_names),
+        'calibrated': True,  # Mark that this model is calibrated
+        'calibration_method': 'isotonic',
     }
     metadata_path = model_dir / 'model_metadata.json'
     with open(metadata_path, 'w') as f:

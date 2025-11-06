@@ -1,8 +1,8 @@
 # Active Context
 ## Tutor Quality Scoring System
 
-**Last Updated:** Matching Dashboard 401 Fix Complete  
-**Current Focus:** Matching Service Fully Functional, All Issues Resolved
+**Last Updated:** Reschedule Prediction & Upcoming Sessions Implementation Complete  
+**Current Focus:** Reschedule Prediction Model Calibration Issues Identified, Upcoming Sessions Dashboard Functional
 
 ---
 
@@ -25,6 +25,64 @@ All planning documents have been created and organized:
   - `planning/tasks/task_list_matching_service.md` - Matching service implementation tasks (NEW)
 
 ### Implementation Phase: 🚀 IN PROGRESS
+
+### Reschedule Prediction & Upcoming Sessions Phase: ✅ COMPLETE (Model Calibration Issues Identified)
+
+**Status:** Fully implemented but model needs retraining  
+**Priority:** High (Addresses 98.2% tutor-initiated reschedules proactively)
+
+**Implementation Completed:**
+- ✅ Database schema: SessionReschedulePrediction model
+- ✅ Database migration created and applied
+- ✅ Feature engineering service implemented (`reschedule_feature_engineering.py`)
+- ✅ ML model training script created (`train_reschedule_model.py`)
+- ✅ Reschedule prediction service with fallback logic (`reschedule_prediction_service.py`)
+- ✅ All API endpoints implemented (`/api/upcoming-sessions/*`)
+- ✅ Frontend dashboard page (`UpcomingSessions.jsx`)
+- ✅ Upcoming sessions table component with filtering/sorting
+- ✅ Data population script for testing (`populate_upcoming_sessions.py`)
+- ✅ React Query hook for data fetching (`useUpcomingSessions.js`)
+- ✅ Comprehensive documentation
+
+**Key Features Implemented:**
+- ✅ ML model for reschedule prediction (XGBoost with rule-based fallback)
+- ✅ Upcoming sessions dashboard with reschedule probabilities
+- ✅ Risk level classification (low/medium/high)
+- ✅ Filtering by risk level, tutor, date range
+- ✅ Sorting by scheduled time, probability, tutor name
+- ✅ Pagination support
+- ✅ Real-time updates via polling (30-second intervals)
+
+**Known Issues:**
+- ⚠️ **Model Calibration:** Model predicts 0.1-2.4% (mean: 1.01%) when training data had 15.3% reschedule rate
+- ⚠️ **Severe Overfitting:** 99.16% accuracy, 100% recall suggests memorization
+- ⚠️ **Feature Scaling:** Features not normalized, causing single-feature dominance (93.64% on `session_duration_minutes`)
+- ⚠️ **All Predictions Low Risk:** 100% of predictions categorized as "low" risk
+- **Recommendation:** Retrain model with proper feature scaling, reduced max_depth, and better regularization
+
+**Files Created:**
+- Backend: `app/models/session_reschedule_prediction.py`
+- Backend: `app/services/reschedule_feature_engineering.py`, `reschedule_prediction_service.py`
+- Backend: `app/api/upcoming_sessions.py`
+- Backend: `app/schemas/session_reschedule_prediction.py`
+- Backend: `alembic/versions/2c0ffcbb1800_add_session_reschedule_predictions.py`
+- Frontend: `src/pages/UpcomingSessions.jsx`
+- Frontend: `src/components/sessions/UpcomingSessionsTable.jsx`, `SessionFilters.jsx`
+- Frontend: `src/hooks/useUpcomingSessions.js`
+- Frontend: `src/services/upcomingSessionsApi.js`
+- Scripts: `scripts/train_reschedule_model.py`, `scripts/populate_upcoming_sessions.py`, `scripts/refresh_all_predictions.py`
+- Documentation: `docs/RESCHEDULE_MODEL_ISSUES_ANALYSIS.md`, `docs/RESCHEDULE_RATE_ANALYSIS.md`, `docs/RESCHEDULE_RATE_UPDATE_SUMMARY.md`
+
+**Model Files:**
+- `backend/models/reschedule_model.pkl` - Trained XGBoost model
+- `backend/models/reschedule_feature_names.json` - Feature names in order
+- `backend/models/reschedule_model_metadata.json` - Model metadata
+
+**Next Steps:**
+1. Retrain model with proper feature scaling (StandardScaler/MinMaxScaler)
+2. Reduce overfitting (max_depth 3-4, early stopping, better regularization)
+3. Recalibrate predictions (Platt scaling/isotonic regression)
+4. Validate predictions match expected distribution (5-25% range)
 
 ### Matching Service Phase: ✅ COMPLETE
 **Status:** Fully implemented and ready for testing  
@@ -190,7 +248,37 @@ All environment setup tasks completed:
 
 ## Recent Changes
 
-### Matching Dashboard 401 Unauthorized Fix (Latest)
+### Reschedule Prediction Model Issues Identified (Latest)
+
+**Issue:** Reschedule prediction model is severely miscalibrated and overfit
+- **Symptoms:** Predictions 0.1-2.4% (mean: 1.01%) when training data had 15.3% reschedule rate
+- **Root Causes:**
+  1. **Severe Feature Scaling Mismatch:** Features not normalized (hours_until_session: 296.93 vs tutor_reschedule_rate_30d: 0.15)
+  2. **Extreme Overfitting:** 99.16% accuracy, 100% recall suggests memorization
+  3. **Single Feature Dominance:** 93.64% importance on `session_duration_minutes`
+  4. **All Low Risk:** 100% of predictions categorized as "low" risk
+- **Documentation:** See `docs/RESCHEDULE_MODEL_ISSUES_ANALYSIS.md` for full analysis
+- **Recommendations:**
+  - Retrain with proper feature scaling (StandardScaler/MinMaxScaler)
+  - Reduce max_depth (currently 5, try 3-4)
+  - Add early stopping and cross-validation
+  - Recalibrate with Platt scaling/isotonic regression
+- **Files:** `backend/app/services/reschedule_prediction_service.py`, `scripts/train_reschedule_model.py`
+
+### Reschedule Rate Data Generation Updates (Previous)
+
+**Changes:**
+- ✅ Reduced reschedule rate: 25% → 12% (more realistic)
+- ✅ Increased completion rate: 70% → 85%
+- ✅ Doubled default session count: 3000 → 6000
+- ✅ Increased session frequency per tutor (2-3 sessions/week standard)
+- ✅ Fixed data clearing function to handle foreign key constraints
+- ✅ Aligned training script target rate (10% → 12%)
+- **Impact:** More realistic data, better statistical stability (3x improvement)
+- **Files:** `scripts/generate_data.py`, `scripts/train_reschedule_model.py`
+- **Documentation:** See `docs/RESCHEDULE_RATE_UPDATE_SUMMARY.md`
+
+### Matching Dashboard 401 Unauthorized Fix (Previous)
 
 **Issue:** Matching dashboard showing 401 Unauthorized errors when loading students/tutors
 - **Symptoms:** Browser console shows `Failed to load resource: the server responded with a status of 401 (Unauthorized)` for `/api/matching/students` and `/api/matching/tutors` endpoints

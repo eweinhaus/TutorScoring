@@ -2,6 +2,7 @@ import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getStudents, getTutors } from '../../services/matchingApi'
 import Modal from '../common/Modal'
+import { formatChurnProbability } from '../../utils/formatters'
 
 function MatchingResultsModal({ isOpen, onClose, results }) {
   // Fetch students and tutors for name lookup
@@ -28,9 +29,6 @@ function MatchingResultsModal({ isOpen, onClose, results }) {
   const studentMap = new Map(students.map(s => [s.id, s]))
   const tutorMap = new Map(tutors.map(t => [t.id, t]))
 
-  const formatPercent = (value) => {
-    return (value * 100).toFixed(1) + '%'
-  }
 
   return (
     <Modal 
@@ -75,7 +73,7 @@ function MatchingResultsModal({ isOpen, onClose, results }) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatPercent(churnProbability)}
+                        {formatChurnProbability(churnProbability)}
                       </div>
                     </td>
                   </tr>

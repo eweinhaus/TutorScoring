@@ -10,8 +10,8 @@ import { RISK_STATUS, SORT_OPTIONS, SORT_ORDER } from '../utils/constants'
  */
 function TutorList() {
   const [riskStatus, setRiskStatus] = useState(RISK_STATUS.ALL)
-  const [sortBy, setSortBy] = useState(SORT_OPTIONS.RESCHEDULE_RATE)
-  const [sortOrder, setSortOrder] = useState(SORT_ORDER.DESC)
+  const [sortBy, setSortBy] = useState(SORT_OPTIONS.NAME)
+  const [sortOrder, setSortOrder] = useState(SORT_ORDER.ASC)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Build filters for API

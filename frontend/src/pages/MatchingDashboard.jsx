@@ -30,7 +30,7 @@ function MatchingDashboard() {
     error: studentsError,
   } = useQuery({
     queryKey: ['students'],
-    queryFn: () => getStudents(100, 0),
+    queryFn: () => getStudents(500, 0),
   })
 
   // Fetch tutors
@@ -40,11 +40,22 @@ function MatchingDashboard() {
     error: tutorsError,
   } = useQuery({
     queryKey: ['matching-tutors'],
-    queryFn: () => getTutors(100, 0),
+    queryFn: () => getTutors(500, 0),
   })
 
   const students = studentsData?.students || []
-  const tutors = tutorsData || []
+  // API returns array directly (not wrapped in object)
+  const tutorsRaw = Array.isArray(tutorsData) ? tutorsData : []
+  
+  // Filter out tutors that don't have survey data (matching preferences)
+  // Tutors need at least teaching_style to be useful for matching
+  const tutors = tutorsRaw.filter(tutor => {
+    if (!tutor) return false
+    // Check if tutor has at least teaching_style (required for matching)
+    // This prevents showing "New tutor N/A" in the UI
+    const hasTeachingStyle = tutor.teaching_style != null && tutor.teaching_style !== ''
+    return hasTeachingStyle
+  })
 
   // Open match modal when both student and tutor are selected
   useEffect(() => {
@@ -116,15 +127,17 @@ function MatchingDashboard() {
           {/* Students column */}
           <div>
             <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-xl font-semibold mb-4">Students</h2>
+              <h2 className="text-xl font-semibold mb-4">Students ({students.length})</h2>
               {students.length === 0 ? (
                 <p className="text-gray-500">No students found.</p>
               ) : (
-                <StudentList
-                  students={students}
-                  selectedId={selectedStudentId}
-                  onSelect={handleStudentSelect}
-                />
+                <div className="max-h-[600px] overflow-y-auto">
+                  <StudentList
+                    students={students}
+                    selectedId={selectedStudentId}
+                    onSelect={handleStudentSelect}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -132,15 +145,24 @@ function MatchingDashboard() {
           {/* Tutors column */}
           <div>
             <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-xl font-semibold mb-4">Tutors</h2>
+              <h2 className="text-xl font-semibold mb-4">Tutors ({tutors.length})</h2>
               {tutors.length === 0 ? (
-                <p className="text-gray-500">No tutors found.</p>
+                <div className="text-gray-500">
+                  <p>No tutors with survey data found.</p>
+                  {tutorsRaw.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      ({tutorsRaw.length} tutors without survey data were filtered out)
+                    </p>
+                  )}
+                </div>
               ) : (
-                <TutorList
-                  tutors={tutors}
-                  selectedId={selectedTutorId}
-                  onSelect={handleTutorSelect}
-                />
+                <div className="max-h-[600px] overflow-y-auto">
+                  <TutorList
+                    tutors={tutors}
+                    selectedId={selectedTutorId}
+                    onSelect={handleTutorSelect}
+                  />
+                </div>
               )}
             </div>
           </div>

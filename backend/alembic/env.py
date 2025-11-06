@@ -35,6 +35,7 @@ from app.models.tutor_score import TutorScore
 from app.models.email_report import EmailReport
 from app.models.student import Student
 from app.models.match_prediction import MatchPrediction
+from app.models.session_reschedule_prediction import SessionReschedulePrediction
 
 target_metadata = Base.metadata
 

@@ -23,7 +23,7 @@ function MatchingAlgorithmModal({ isOpen, onClose, onResultsReady }) {
     error: studentsError,
   } = useQuery({
     queryKey: ['students'],
-    queryFn: () => getStudents(100, 0),
+    queryFn: () => getStudents(500, 0),
     enabled: isOpen,
   })
 
@@ -34,12 +34,23 @@ function MatchingAlgorithmModal({ isOpen, onClose, onResultsReady }) {
     error: tutorsError,
   } = useQuery({
     queryKey: ['matching-tutors'],
-    queryFn: () => getTutors(100, 0),
+    queryFn: () => getTutors(500, 0),
     enabled: isOpen,
   })
 
   const students = studentsData?.students || []
-  const tutors = tutorsData || []
+  // API returns array directly (not wrapped in object)
+  const tutorsRaw = Array.isArray(tutorsData) ? tutorsData : []
+  
+  // Filter out tutors that don't have survey data (matching preferences)
+  // Tutors need at least teaching_style to be useful for matching
+  const tutors = tutorsRaw.filter(tutor => {
+    if (!tutor) return false
+    // Check if tutor has at least teaching_style (required for matching)
+    // This prevents showing "New tutor N/A" in the UI
+    const hasTeachingStyle = tutor.teaching_style != null && tutor.teaching_style !== ''
+    return hasTeachingStyle
+  })
 
   // Multi-select handlers
   const handleToggleStudent = (studentId) => {

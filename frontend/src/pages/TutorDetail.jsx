@@ -1,13 +1,11 @@
-import React, { useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTutorDetail } from '../hooks/useTutorDetail'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 import RiskBadge from '../components/common/RiskBadge'
 import RescheduleTable from '../components/tutor/RescheduleTable'
-import RescheduleRateChart from '../components/charts/RescheduleRateChart'
-import StatsCard from '../components/charts/StatsCard'
-import { RISK_THRESHOLD, TIME_PERIODS } from '../utils/constants'
+import { RISK_THRESHOLD } from '../utils/constants'
 import { formatPercentage, formatDate } from '../utils/formatters'
 
 /**
@@ -16,38 +14,12 @@ import { formatPercentage, formatDate } from '../utils/formatters'
 function TutorDetail() {
   const { id } = useParams()
   const { tutor, history, isLoading, error, refetch } = useTutorDetail(id)
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState('30d')
 
   // Normalize tutor score data - handle both API response formats
   const tutorScore = useMemo(() => {
     if (!tutor) return null
     return tutor.scores || tutor.statistics || tutor.tutor_score || null
   }, [tutor])
-
-  // Prepare chart data from history
-  const chartData = useMemo(() => {
-    if (!history || !history.reschedules || history.reschedules.length === 0) {
-      return []
-    }
-
-    // Group reschedules by date and calculate rates
-    // For MVP, we'll use the tutor_score data if available
-    // Otherwise, create simplified data points
-    if (tutorScore) {
-      // Create data points from tutor score history (if available)
-      // For now, we'll show current rates as a single data point
-      return [
-        {
-          date: tutorScore.last_calculated_at || new Date().toISOString(),
-          rate7d: tutorScore.reschedule_rate_7d || 0,
-          rate30d: tutorScore.reschedule_rate_30d || 0,
-          rate90d: tutorScore.reschedule_rate_90d || 0,
-        },
-      ]
-    }
-
-    return []
-  }, [history, tutorScore])
 
   // Get recent reschedules (last 10-20)
   const recentReschedules = useMemo(() => {
@@ -216,15 +188,15 @@ function TutorDetail() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Total Sessions (30d)</p>
+            <p className="text-sm text-gray-600 mb-1">Total Sessions (90d)</p>
             <p className="text-2xl font-bold text-gray-900">
-              {score.total_sessions_30d || 0}
+              {score.total_sessions_90d || 0}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 mb-1">Reschedule Rate (30d)</p>
+            <p className="text-sm text-gray-600 mb-1">Reschedule Rate (90d)</p>
             <p className="text-2xl font-bold text-gray-900">
-              {formatPercentage(score.reschedule_rate_30d)}
+              {formatPercentage(score.reschedule_rate_90d)}
             </p>
           </div>
           <div>
@@ -234,106 +206,6 @@ function TutorDetail() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Reschedule Rate Chart */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Reschedule Rate Trends</h2>
-          <div className="flex gap-2">
-            {TIME_PERIODS.map((period) => (
-              <button
-                key={period}
-                onClick={() => setSelectedTimePeriod(period)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedTimePeriod === period
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {period.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-        <RescheduleRateChart
-          data={chartData}
-          threshold={RISK_THRESHOLD}
-          timePeriod={selectedTimePeriod}
-        />
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatsCard
-          label="Total Sessions (7d)"
-          value={score.total_sessions_7d || 0}
-          color="primary"
-        />
-        <StatsCard
-          label="Total Sessions (30d)"
-          value={score.total_sessions_30d || 0}
-          color="primary"
-        />
-        <StatsCard
-          label="Total Sessions (90d)"
-          value={score.total_sessions_90d || 0}
-          color="primary"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatsCard
-          label="Reschedules (7d)"
-          value={score.tutor_reschedules_7d || 0}
-          color="warning"
-        />
-        <StatsCard
-          label="Reschedules (30d)"
-          value={score.tutor_reschedules_30d || 0}
-          color="warning"
-        />
-        <StatsCard
-          label="Reschedules (90d)"
-          value={score.tutor_reschedules_90d || 0}
-          color="warning"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatsCard
-          label="Rate (7d)"
-          value={formatPercentage(score.reschedule_rate_7d)}
-          color={
-            (score.reschedule_rate_7d || 0) >= RISK_THRESHOLD
-              ? 'danger'
-              : (score.reschedule_rate_7d || 0) >= RISK_THRESHOLD * 0.67
-              ? 'warning'
-              : 'success'
-          }
-        />
-        <StatsCard
-          label="Rate (30d)"
-          value={formatPercentage(score.reschedule_rate_30d)}
-          color={
-            (score.reschedule_rate_30d || 0) >= RISK_THRESHOLD
-              ? 'danger'
-              : (score.reschedule_rate_30d || 0) >= RISK_THRESHOLD * 0.67
-              ? 'warning'
-              : 'success'
-          }
-        />
-        <StatsCard
-          label="Rate (90d)"
-          value={formatPercentage(score.reschedule_rate_90d)}
-          color={
-            (score.reschedule_rate_90d || 0) >= RISK_THRESHOLD
-              ? 'danger'
-              : (score.reschedule_rate_90d || 0) >= RISK_THRESHOLD * 0.67
-              ? 'warning'
-              : 'success'
-          }
-        />
       </div>
 
       {/* Recent Reschedules Table */}
