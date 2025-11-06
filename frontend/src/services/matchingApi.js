@@ -17,7 +17,7 @@ const getApiUrl = () => {
     return ''  // Empty string means relative to current origin
   }
   
-  return 'http://localhost:8001'
+  return '' // Use relative URL to go through vite proxy
 }
 
 const API_URL = getApiUrl()
@@ -36,16 +36,20 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', error)
     if (error.response) {
       // Server responded with error
-      const message = error.response.data?.detail || error.response.data?.error || 'An error occurred'
+      const message = error.response.data?.detail || error.response.data?.error || error.response.statusText || 'An error occurred'
+      console.error('API Error Response:', error.response.data)
       return Promise.reject(new Error(message))
     } else if (error.request) {
       // Request made but no response
+      console.error('No response from server:', error.request)
       return Promise.reject(new Error('No response from server. Please check your connection.'))
     } else {
       // Error setting up request
-      return Promise.reject(new Error('Request setup error'))
+      console.error('Request setup error:', error.message)
+      return Promise.reject(new Error(error.message || 'Request setup error'))
     }
   }
 )
@@ -113,6 +117,17 @@ export const getStudentMatches = async (studentId, sortBy = 'compatibility_score
 export const getTutorMatches = async (tutorId, sortBy = 'compatibility_score', sortOrder = 'desc', limit = 100, offset = 0) => {
   const response = await apiClient.get(`/tutors/${tutorId}/matches`, {
     params: { sort_by: sortBy, sort_order: sortOrder, limit, offset },
+  })
+  return response.data
+}
+
+/**
+ * Run matching algorithm to find optimal 1-to-1 assignments
+ */
+export const runMatching = async (studentIds, tutorIds) => {
+  const response = await apiClient.post('/run-matching', {
+    student_ids: studentIds,
+    tutor_ids: tutorIds
   })
   return response.data
 }

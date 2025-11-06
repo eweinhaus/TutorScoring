@@ -14,7 +14,7 @@ const getApiUrl = () => {
     return ''  // Empty string means relative to current origin
   }
   
-  return 'http://localhost:8001'
+  return '' // Use relative URL to go through vite proxy
 }
 
 const API_BASE_URL = getApiUrl()

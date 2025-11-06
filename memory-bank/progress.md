@@ -5,6 +5,44 @@
 
 ---
 
+## Reschedule Prediction & Upcoming Sessions: ✅ COMPLETE (Model Calibration Issues)
+
+### Status Summary
+All reschedule prediction and upcoming sessions features have been implemented:
+- ✅ Database schema and models
+- ✅ Feature engineering service
+- ✅ ML model training script
+- ✅ Backend API endpoints
+- ✅ Frontend dashboard page
+- ✅ Testing utilities
+- ✅ Documentation
+- ⚠️ Model calibration issues identified (needs retraining)
+
+### Implementation Details
+See `docs/RESCHEDULE_MODEL_ISSUES_ANALYSIS.md` for model analysis.
+See `docs/RESCHEDULE_RATE_UPDATE_SUMMARY.md` for data generation updates.
+See `planning/tasks/task_list_reschedule_prediction.md` for full task list.
+
+### Known Issues
+- ⚠️ Model predicts 0.1-2.4% (mean: 1.01%) when training data had 15.3% reschedule rate
+- ⚠️ Severe overfitting (99.16% accuracy, 100% recall)
+- ⚠️ Feature scaling issues (features not normalized)
+- ⚠️ Single feature dominance (93.64% importance on `session_duration_minutes`)
+- **Recommendation:** Retrain model with proper feature scaling, reduced max_depth, and better regularization
+
+### Setup and Usage
+**To populate upcoming sessions:**
+1. Run: `python scripts/populate_upcoming_sessions.py --num-sessions 20`
+2. Generate predictions: `python scripts/refresh_all_predictions.py`
+3. Access dashboard: Navigate to `/upcoming-sessions` route in frontend
+
+**To retrain model:**
+1. Ensure data is populated: `python scripts/generate_data.py --sessions 6000`
+2. Train: `python scripts/train_reschedule_model.py`
+3. Model will be saved to `backend/models/reschedule_model.pkl`
+
+---
+
 ## Matching Service Implementation: ✅ COMPLETE
 
 ### Status Summary
@@ -16,10 +54,24 @@ All matching service tasks have been completed:
 - ✅ AI explanation service
 - ✅ Testing suite
 - ✅ Documentation
+- ✅ Data generation script fixed and tested
+- ✅ API key configuration fixed (matching dashboard now functional)
 
 ### Implementation Details
 See `docs/MATCHING_SERVICE.md` for full documentation.
 See `MANUAL_TESTING_MATCHING_SERVICE.md` for testing instructions.
+
+### Setup and Troubleshooting
+**To start matching dashboard:**
+1. Ensure database migration applied: `cd backend && alembic upgrade head`
+2. Generate matching data: `python scripts/generate_matching_data.py --num-students 20`
+3. Verify API keys match: `frontend/.env` `VITE_API_KEY` must match `backend/.env` `API_KEY`
+4. Restart frontend dev server after `.env` changes (Vite reads env vars at startup)
+
+**Common Issues:**
+- **401 Unauthorized:** Frontend and backend API keys don't match - see `systemPatterns.md` Authentication Pattern section
+- **No students:** Run data generation script: `python scripts/generate_matching_data.py --num-students 20`
+- **Import errors in data script:** Fixed - removed unused `get_tutor_stats` import, use `db.add_all()` not `bulk_save_objects()`
 
 ---
 
@@ -259,7 +311,49 @@ See `MANUAL_TESTING_MATCHING_SERVICE.md` for testing instructions.
 
 ---
 
-### Phase 6: Matching Service
+### Phase 6: Reschedule Prediction & Upcoming Sessions
+
+**Status:** ✅ Complete (Model Calibration Issues Identified)  
+**Priority:** High (Addresses 98.2% tutor-initiated reschedules proactively)
+
+**Completed Tasks:**
+- [x] Design database schema (SessionReschedulePrediction model)
+- [x] Create database migration
+- [x] Implement feature engineering service
+- [x] Create ML model training script
+- [x] Implement reschedule prediction service with fallback
+- [x] Implement API endpoints (`/api/upcoming-sessions/*`)
+- [x] Build frontend dashboard page
+- [x] Create upcoming sessions table component
+- [x] Implement filtering and sorting
+- [x] Add React Query integration with polling
+- [x] Create data population script
+- [x] Create prediction refresh script
+- [x] Write comprehensive documentation
+- [x] Identify model calibration issues
+
+**Remaining Tasks:**
+- [ ] Retrain model with proper feature scaling
+- [ ] Reduce overfitting (lower max_depth, add early stopping)
+- [ ] Recalibrate predictions (Platt scaling/isotonic regression)
+- [ ] Validate predictions match expected distribution
+- [ ] Update dashboard with improved model
+
+**Known Issues:**
+- Model calibration problems (documented in `docs/RESCHEDULE_MODEL_ISSUES_ANALYSIS.md`)
+- Feature scaling not applied
+- Overfitting (99.16% accuracy suggests memorization)
+
+**Deliverables:**
+- ✅ Complete reschedule prediction service
+- ✅ Upcoming sessions dashboard functional
+- ✅ ML model trained (needs retraining for calibration)
+- ✅ API endpoints working
+- ⚠️ Model predictions need calibration
+
+---
+
+### Phase 7: Matching Service
 
 **Status:** Planning Complete, Ready for Implementation  
 **Priority:** High (Addresses 24% of churners with poor first session experiences)
@@ -288,7 +382,7 @@ See `MANUAL_TESTING_MATCHING_SERVICE.md` for testing instructions.
 
 ---
 
-### Phase 7: Deployment
+### Phase 8: Deployment
 
 **Status:** ✅ AWS Deployment Complete  
 **Priority:** High (Demo Requirement)

@@ -31,6 +31,19 @@ _cached_feature_names = None
 _cached_metadata = None
 
 
+def clear_model_cache():
+    """
+    Clear the cached model to force reload from disk.
+    
+    Call this after retraining the model to ensure the new model is used.
+    """
+    global _cached_model, _cached_feature_names, _cached_metadata
+    _cached_model = None
+    _cached_feature_names = None
+    _cached_metadata = None
+    logger.info("Model cache cleared - next prediction will load new model")
+
+
 def _get_model_path() -> Path:
     """Get path to model file."""
     backend_dir = Path(__file__).parent.parent.parent
@@ -203,7 +216,8 @@ def get_or_create_match_prediction(
     db: Session,
     student: Student,
     tutor: Tutor,
-    tutor_stats: Optional[Dict] = None
+    tutor_stats: Optional[Dict] = None,
+    force_refresh: bool = False
 ) -> MatchPrediction:
     """
     Get existing match prediction or create new one.
@@ -213,6 +227,7 @@ def get_or_create_match_prediction(
         student: Student model instance
         tutor: Tutor model instance
         tutor_stats: Optional tutor statistics
+        force_refresh: If True, recalculate existing predictions (default: False)
         
     Returns:
         MatchPrediction model instance
@@ -223,11 +238,27 @@ def get_or_create_match_prediction(
         MatchPrediction.tutor_id == tutor.id
     ).first()
     
-    if existing:
-        return existing
-    
     # Generate prediction
     prediction_data = predict_match(student, tutor, tutor_stats)
+    
+    if existing:
+        if force_refresh:
+            # Update existing prediction with new data
+            existing.churn_probability = Decimal(str(prediction_data['churn_probability']))
+            existing.risk_level = prediction_data['risk_level']
+            existing.compatibility_score = Decimal(str(prediction_data['compatibility_score']))
+            existing.pace_mismatch = Decimal(str(prediction_data['mismatch_scores']['pace_mismatch']))
+            existing.style_mismatch = Decimal(str(prediction_data['mismatch_scores']['style_mismatch']))
+            existing.communication_mismatch = Decimal(str(prediction_data['mismatch_scores']['communication_mismatch']))
+            existing.age_difference = int(prediction_data['mismatch_scores']['age_difference'])
+            # Clear AI explanation since prediction changed
+            existing.ai_explanation = None
+            db.commit()
+            db.refresh(existing)
+            logger.info(f"Refreshed match prediction for student {student.id} and tutor {tutor.id}")
+            return existing
+        else:
+            return existing
     
     # Create new prediction
     match_prediction = MatchPrediction(
@@ -248,4 +279,127 @@ def get_or_create_match_prediction(
     db.refresh(match_prediction)
     
     return match_prediction
+
+
+def refresh_tutor_predictions(db: Session, tutor_id: str) -> int:
+    """
+    Refresh all match predictions for a specific tutor.
+    
+    This should be called when tutor data or tutor_stats change.
+    
+    Args:
+        db: Database session
+        tutor_id: Tutor UUID string
+        
+    Returns:
+        Number of predictions refreshed
+    """
+    from app.models.student import Student
+    from app.models.tutor import Tutor
+    
+    tutor = db.query(Tutor).filter(Tutor.id == tutor_id).first()
+    if not tutor:
+        logger.warning(f"Tutor {tutor_id} not found for prediction refresh")
+        return 0
+    
+    # Get tutor stats
+    tutor_stats = None
+    if tutor.tutor_score:
+        tutor_stats = {
+            'reschedule_rate_30d': float(tutor.tutor_score.reschedule_rate_30d or 0),
+            'total_sessions_30d': tutor.tutor_score.total_sessions_30d,
+            'is_high_risk': tutor.tutor_score.is_high_risk,
+        }
+    
+    # Get all students
+    students = db.query(Student).all()
+    
+    refreshed_count = 0
+    for student in students:
+        # Force refresh existing prediction
+        get_or_create_match_prediction(db, student, tutor, tutor_stats, force_refresh=True)
+        refreshed_count += 1
+    
+    logger.info(f"Refreshed {refreshed_count} match predictions for tutor {tutor_id}")
+    return refreshed_count
+
+
+def refresh_student_predictions(db: Session, student_id: str) -> int:
+    """
+    Refresh all match predictions for a specific student.
+    
+    This should be called when student data changes.
+    
+    Args:
+        db: Database session
+        student_id: Student UUID string
+        
+    Returns:
+        Number of predictions refreshed
+    """
+    from app.models.student import Student
+    from app.models.tutor import Tutor
+    
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        logger.warning(f"Student {student_id} not found for prediction refresh")
+        return 0
+    
+    # Get all tutors
+    tutors = db.query(Tutor).all()
+    
+    refreshed_count = 0
+    for tutor in tutors:
+        # Get tutor stats
+        tutor_stats = None
+        if tutor.tutor_score:
+            tutor_stats = {
+                'reschedule_rate_30d': float(tutor.tutor_score.reschedule_rate_30d or 0),
+                'total_sessions_30d': tutor.tutor_score.total_sessions_30d,
+                'is_high_risk': tutor.tutor_score.is_high_risk,
+            }
+        
+        # Force refresh existing prediction
+        get_or_create_match_prediction(db, student, tutor, tutor_stats, force_refresh=True)
+        refreshed_count += 1
+    
+    logger.info(f"Refreshed {refreshed_count} match predictions for student {student_id}")
+    return refreshed_count
+
+
+def refresh_all_predictions(db: Session) -> int:
+    """
+    Refresh all match predictions in the database.
+    
+    This should be called when model is retrained or when data changes significantly.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        Total number of predictions refreshed
+    """
+    from app.models.student import Student
+    from app.models.tutor import Tutor
+    
+    students = db.query(Student).all()
+    tutors = db.query(Tutor).all()
+    
+    total_refreshed = 0
+    for tutor in tutors:
+        # Get tutor stats
+        tutor_stats = None
+        if tutor.tutor_score:
+            tutor_stats = {
+                'reschedule_rate_30d': float(tutor.tutor_score.reschedule_rate_30d or 0),
+                'total_sessions_30d': tutor.tutor_score.total_sessions_30d,
+                'is_high_risk': tutor.tutor_score.is_high_risk,
+            }
+        
+        for student in students:
+            get_or_create_match_prediction(db, student, tutor, tutor_stats, force_refresh=True)
+            total_refreshed += 1
+    
+    logger.info(f"Refreshed {total_refreshed} match predictions total")
+    return total_refreshed
 

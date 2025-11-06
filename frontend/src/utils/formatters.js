@@ -67,6 +67,49 @@ export const formatHours = (hours) => {
 }
 
 /**
+ * Format churn probability with special handling for extreme values
+ * @param {number|string} probability - Churn probability (0-1 or percentage 0-100)
+ * @param {number} decimals - Number of decimal places (default: 1)
+ * @returns {string} Formatted churn probability (e.g., "<2%", ">98%", "23.5%")
+ */
+export const formatChurnProbability = (probability, decimals = 1) => {
+  if (probability === null || probability === undefined || probability === '') {
+    return 'N/A'
+  }
+  
+  // Convert to number (handle both 0-1 and 0-100 formats)
+  let value = parseFloat(probability)
+  
+  // If value is > 1, assume it's already a percentage (0-100), otherwise assume 0-1
+  if (value > 1) {
+    value = value / 100
+  }
+  
+  // Check if conversion resulted in NaN
+  if (isNaN(value)) {
+    return 'N/A'
+  }
+  
+  // Clamp value to 0-1 range
+  value = Math.max(0, Math.min(1, value))
+  
+  // Convert to percentage
+  const percent = value * 100
+  
+  // Handle extreme values
+  if (percent < 2) {
+    return '<2%'
+  }
+  
+  if (percent > 98) {
+    return '>98%'
+  }
+  
+  // Return formatted percentage with specified decimals
+  return `${percent.toFixed(decimals)}%`
+}
+
+/**
  * Get color code for risk level based on rate and threshold
  * @param {number} rate - Reschedule rate percentage
  * @param {number} threshold - Risk threshold (default: 15)

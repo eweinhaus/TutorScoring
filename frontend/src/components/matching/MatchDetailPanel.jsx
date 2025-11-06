@@ -4,6 +4,7 @@ import { getMatchPrediction } from '../../services/matchingApi'
 import LoadingSpinner from '../common/LoadingSpinner'
 import ErrorMessage from '../common/ErrorMessage'
 import RiskBadge from '../common/RiskBadge'
+import { formatChurnProbability } from '../../utils/formatters'
 
 function MatchDetailPanel({ studentId, tutorId, matchPrediction, isLoading, error }) {
   const getRiskColor = (riskLevel) => {
@@ -44,7 +45,7 @@ function MatchDetailPanel({ studentId, tutorId, matchPrediction, isLoading, erro
   }
 
   const compatibilityPercent = (parseFloat(matchPrediction.compatibility_score) * 100).toFixed(0)
-  const churnPercent = (parseFloat(matchPrediction.churn_probability) * 100).toFixed(1)
+  const churnPercent = formatChurnProbability(matchPrediction.churn_probability)
 
   return (
     <div className="bg-white rounded-lg shadow p-4 space-y-4">
@@ -59,7 +60,7 @@ function MatchDetailPanel({ studentId, tutorId, matchPrediction, isLoading, erro
           </span>
         </div>
         <div className="text-sm text-gray-600">
-          {churnPercent}% probability of churn
+          {churnPercent} probability of churn
         </div>
       </div>
 

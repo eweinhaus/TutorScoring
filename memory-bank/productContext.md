@@ -112,6 +112,18 @@ Dashboard Displays → Admin Views → Takes Action
 
 **Impact:** Administrators can identify high-risk matches before first sessions and make better matching decisions.
 
+### Problem 5: Reactive vs Proactive Reschedule Management (Reschedule Prediction)
+
+**Problem:** Current system flags tutors after reschedules occur (reactive). Administrators cannot identify which upcoming sessions are likely to reschedule before they happen.
+
+**Solution:**
+- ML model predicts reschedule probability for each upcoming session
+- Upcoming sessions dashboard displays all future sessions with risk levels
+- Proactive identification enables early intervention (emails, reminders)
+- Risk classification (low/medium/high) for quick scanning
+
+**Impact:** Administrators can intervene before sessions are disrupted, reducing last-minute reschedules and improving student satisfaction.
+
 ---
 
 ## User Experience Goals
@@ -155,6 +167,7 @@ Dashboard Displays → Admin Views → Takes Action
 ## Future Vision
 
 ### Phase 2: Enhanced Intelligence
+- ✅ Reschedule prediction for upcoming sessions (IMPLEMENTED - needs model calibration)
 - No-show risk prediction
 - AI-powered pattern analysis of reschedule reasons
 - Predictive insights

@@ -35,7 +35,6 @@ from app.models.student import Student
 from app.models.tutor import Tutor
 from app.models.match_prediction import MatchPrediction
 from app.services.match_prediction_service import get_or_create_match_prediction
-from app.services.tutor_service import get_tutor_stats
 
 fake = Faker()
 
@@ -78,7 +77,7 @@ def generate_students(db: Session, num_students: int):
         students.append(student)
     
     # Bulk insert
-    db.bulk_save_objects(students)
+    db.add_all(students)
     db.commit()
     
     # Refresh to get IDs

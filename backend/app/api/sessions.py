@@ -8,8 +8,11 @@ import logging
 from app.schemas.session import SessionCreate, SessionResponse
 from app.utils.database import get_db
 from app.services.session_service import create_session
+from app.services.tutor_service import get_tutor_statistics
+from app.services.reschedule_prediction_service import get_or_create_prediction
 from app.tasks.session_processor import process_session
 from app.middleware.auth import get_api_key
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +48,16 @@ async def create_session_endpoint(
         
         # Create session via service
         session = create_session(session_data, db)
+        
+        # If session is upcoming, generate reschedule prediction (non-blocking)
+        if session.scheduled_time >= datetime.utcnow():
+            try:
+                tutor_stats = get_tutor_statistics(str(session.tutor_id), db)
+                get_or_create_prediction(session, tutor_stats, db)
+                logger.info(f"Generated reschedule prediction for upcoming session {session.id}")
+            except Exception as e:
+                logger.warning(f"Failed to generate prediction for session {session.id}: {str(e)}")
+                # Continue anyway - prediction can be generated later
         
         # Queue Celery task for background processing
         try:

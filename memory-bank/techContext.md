@@ -40,6 +40,17 @@ pydantic==2.5.0
 httpx==0.27.2  # Pinned for Starlette TestClient compatibility
 ```
 
+**ML Dependencies (Optional - for Matching Service):**
+```
+xgboost>=2.0.0  # XGBoost binary classifier for churn prediction
+scikit-learn>=1.3.0  # Model evaluation and utilities
+pandas>=2.0.0  # Data manipulation (training script)
+numpy>=1.24.0  # Numerical operations
+joblib>=1.3.0  # Model serialization
+faker>=19.0.0  # Synthetic data generation (training script)
+```
+**Note:** ML libraries are optional. The matching service works with rule-based fallback if ML libraries are not installed or model is not trained.
+
 ### Frontend Stack
 
 **Framework:**
@@ -232,6 +243,16 @@ TutorScoring/
 - error_message (TEXT)
 - created_at (TIMESTAMP)
 
+**session_reschedule_predictions:**
+- id (UUID, PK)
+- session_id (UUID, FK → sessions, unique)
+- reschedule_probability (NUMERIC 5,4: 0.0000 to 1.0000)
+- risk_level (VARCHAR: low/medium/high)
+- model_version (VARCHAR)
+- predicted_at (TIMESTAMP)
+- features_json (JSON)
+- created_at, updated_at (TIMESTAMP)
+
 ---
 
 ## API Endpoints (Implemented)
@@ -269,6 +290,25 @@ TutorScoring/
 **GET /api/health**
 - System health check
 - Returns: Status of database, Redis, version
+- Status: ✅ Implemented and working
+
+### Upcoming Sessions Endpoints ✅
+
+**GET /api/upcoming-sessions**
+- List upcoming sessions with reschedule predictions
+- Query params: days_ahead, risk_level, tutor_id, limit, offset, sort_by, sort_order
+- Returns: Paginated list of upcoming sessions with predictions
+- Status: ✅ Implemented and working
+
+**POST /api/upcoming-sessions/batch-predict**
+- Generate predictions for multiple sessions
+- Body: session_ids (optional), days_ahead (optional)
+- Returns: Batch prediction results
+- Status: ✅ Implemented and working
+
+**POST /api/upcoming-sessions/{session_id}/refresh**
+- Refresh prediction for specific session
+- Returns: Updated prediction
 - Status: ✅ Implemented and working
 
 ---

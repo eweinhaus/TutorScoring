@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.tutor import Tutor
     from app.models.reschedule import Reschedule
     from app.models.email_report import EmailReport
+    from app.models.session_reschedule_prediction import SessionReschedulePrediction
 
 
 class Session(BaseModel):
@@ -48,6 +49,12 @@ class Session(BaseModel):
     )
     email_report = relationship(
         'EmailReport',
+        back_populates='session',
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
+    session_reschedule_prediction = relationship(
+        'SessionReschedulePrediction',
         back_populates='session',
         uselist=False,
         cascade='all, delete-orphan'

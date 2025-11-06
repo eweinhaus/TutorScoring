@@ -9,7 +9,7 @@ Generates realistic test data including:
 - Tutor scores calculated from actual data
 
 Usage:
-    python scripts/generate_data.py --tutors 100 --sessions 3000 --days 90 --clear-existing
+    python scripts/generate_data.py --tutors 100 --sessions 6000 --days 90 --clear-existing
 """
 import argparse
 import sys
@@ -31,7 +31,7 @@ from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 
 from app.models import (
-    Tutor, Session, Reschedule, TutorScore, EmailReport
+    Tutor, Session, Reschedule, TutorScore, EmailReport, MatchPrediction, SessionReschedulePrediction
 )
 
 # Load environment variables from backend/.env
@@ -59,9 +59,9 @@ RISK_DISTRIBUTION = {
 }
 
 SESSION_STATUS_DISTRIBUTION = {
-    'completed': 0.70,
-    'rescheduled': 0.25,
-    'no_show': 0.05
+    'completed': 0.85,      # 85% (increased from 70%)
+    'rescheduled': 0.12,    # 12% (reduced from 25% - more realistic)
+    'no_show': 0.03         # 3% (reduced from 5%)
 }
 
 RESCHEDULE_INITIATOR_DISTRIBUTION = {
@@ -244,18 +244,19 @@ def generate_sessions(db: SessionLocal, tutors: List[Tutor], count: int, days: i
     start_date = end_date - timedelta(days=days)
     
     # Calculate session frequency per tutor based on risk category
+    # Updated to align with industry standards (2-3 sessions/week recommended)
     tutor_session_counts = {}
     for tutor in tutors:
         risk_cat = getattr(tutor, '_risk_category', 'low')
         if risk_cat == 'high':
-            # High-risk tutors: 3-5 sessions per week
-            base_freq = random.uniform(3, 5) / 7
+            # High-risk tutors: 3-6 sessions per week (increased from 3-5)
+            base_freq = random.uniform(3, 6) / 7
         elif risk_cat == 'medium':
-            # Medium-risk tutors: 1.5-3 sessions per week
-            base_freq = random.uniform(1.5, 3) / 7
+            # Medium-risk tutors: 2-4 sessions per week (increased from 1.5-3)
+            base_freq = random.uniform(2, 4) / 7
         else:
-            # Low-risk tutors: 1-2 sessions per week
-            base_freq = random.uniform(1, 2) / 7
+            # Low-risk tutors: 2-3 sessions per week (increased from 1-2, industry standard)
+            base_freq = random.uniform(2, 3) / 7
         tutor_session_counts[tutor.id] = base_freq
     
     # Total sessions per tutor
@@ -610,10 +611,19 @@ def clear_existing_data(db: SessionLocal) -> None:
     print("Clearing existing data...")
     
     # Delete in order respecting foreign keys
+    # First delete tables that reference sessions
+    db.query(SessionReschedulePrediction).delete()
     db.query(EmailReport).delete()
     db.query(Reschedule).delete()
+    
+    # Then delete tables that reference tutors
+    db.query(MatchPrediction).delete()
     db.query(TutorScore).delete()
+    
+    # Then delete sessions (which reference tutors)
     db.query(Session).delete()
+    
+    # Finally delete tutors
     db.query(Tutor).delete()
     
     db.commit()
@@ -676,7 +686,7 @@ def main():
     """Main function."""
     parser = argparse.ArgumentParser(description='Generate synthetic data for Tutor Quality Scoring System')
     parser.add_argument('--tutors', type=int, default=100, help='Number of tutors to generate')
-    parser.add_argument('--sessions', type=int, default=3000, help='Number of sessions to generate')
+    parser.add_argument('--sessions', type=int, default=6000, help='Number of sessions to generate (increased for better statistical stability)')
     parser.add_argument('--days', type=int, default=90, help='Number of days to generate sessions over')
     parser.add_argument('--clear-existing', action='store_true', help='Clear existing data before generating')
     

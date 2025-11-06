@@ -1,14 +1,14 @@
 import React, { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'
 import Layout from './components/common/Layout'
 import LoadingSpinner from './components/common/LoadingSpinner'
 
 // Lazy load pages for code splitting
-const Dashboard = lazy(() => import('./pages/Dashboard'))
 const TutorList = lazy(() => import('./pages/TutorList'))
 const TutorDetail = lazy(() => import('./pages/TutorDetail'))
 const MatchingDashboard = lazy(() => import('./pages/MatchingDashboard'))
+const UpcomingSessions = lazy(() => import('./pages/UpcomingSessions'))
 
 // Create QueryClient instance outside component to avoid recreating on re-renders
 const queryClient = new QueryClient({
@@ -27,14 +27,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route
-              index
-              element={
-                <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
-                  <Dashboard />
-                </Suspense>
-              }
-            />
+            <Route index element={<Navigate to="/tutors" replace />} />
             <Route
               path="tutors"
               element={
@@ -60,6 +53,14 @@ function App() {
               }
             />
             <Route
+              path="upcoming-sessions"
+              element={
+                <Suspense fallback={<LoadingSpinner message="Loading upcoming sessions..." />}>
+                  <UpcomingSessions />
+                </Suspense>
+              }
+            />
+            <Route
               path="*"
               element={
                 <div className="card">
@@ -67,8 +68,8 @@ function App() {
                   <p className="text-gray-600 mb-4">
                     The page you're looking for doesn't exist.
                   </p>
-                  <Link to="/" className="btn btn-primary">
-                    Go to Dashboard
+                  <Link to="/tutors" className="btn btn-primary">
+                    Go to Tutors
                   </Link>
                 </div>
               }

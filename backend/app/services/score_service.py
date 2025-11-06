@@ -74,6 +74,17 @@ def update_scores_for_tutor(tutor_id: str, db: Session, risk_threshold: float = 
     # Invalidate cache
     invalidate_tutor_score(tutor_id)
     
+    # Refresh match predictions for this tutor since stats changed
+    try:
+        from app.services.match_prediction_service import refresh_tutor_predictions
+        refreshed_count = refresh_tutor_predictions(db, tutor_id)
+        logger = __import__('logging').getLogger(__name__)
+        logger.info(f"Refreshed {refreshed_count} match predictions after tutor score update")
+    except Exception as e:
+        logger = __import__('logging').getLogger(__name__)
+        logger.warning(f"Failed to refresh match predictions after tutor score update: {e}")
+        # Don't fail if refresh fails
+    
     return tutor_score
 
 

@@ -1,0 +1,14 @@
+{
+  "model_version": "v1.0",
+  "trained_at": "2025-11-06T02:29:33.627625",
+  "metrics": {
+    "accuracy": 0.9915966386554622,
+    "precision": 0.9479166666666666,
+    "recall": 1.0,
+    "f1_score": 0.9732620320855615,
+    "roc_auc": 0.9975798011512297
+  },
+  "feature_count": 22,
+  "training_samples": 22,
+  "reschedule_rate": 0.15275908479138628
+}
