@@ -53,7 +53,7 @@ class Session(BaseModel):
         uselist=False,
         cascade='all, delete-orphan'
     )
-    session_reschedule_prediction = relationship(
+    reschedule_prediction = relationship(
         'SessionReschedulePrediction',
         back_populates='session',
         uselist=False,

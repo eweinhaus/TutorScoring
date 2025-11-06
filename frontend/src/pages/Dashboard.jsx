@@ -20,7 +20,7 @@ function Dashboard() {
         totalTutors: 0,
         highRiskCount: 0,
         averageRescheduleRate: 0,
-        recentActivity: 0,
+        averageRescheduleRate90d: 0,
       }
     }
 
@@ -33,27 +33,23 @@ function Dashboard() {
       return rate >= RISK_THRESHOLD
     }).length
 
-    // Calculate average reschedule rate
+    // Calculate average reschedule rate (30d)
     const totalRate = tutors.reduce((sum, tutor) => {
       return sum + (tutor.reschedule_rate_30d || tutor.tutor_score?.reschedule_rate_30d || 0)
     }, 0)
     const averageRescheduleRate = totalTutors > 0 ? totalRate / totalTutors : 0
 
-    // Count recent activity (tutors with sessions in last 7 days)
-    // For now, we'll use tutors with recent score calculations as a proxy
-    const recentActivity = tutors.filter((tutor) => {
-      const lastUpdated = tutor.last_calculated_at || tutor.tutor_score?.last_calculated_at || tutor.updated_at
-      if (!lastUpdated) return false
-      const daysSinceUpdate =
-        (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60 * 24)
-      return daysSinceUpdate <= 7
-    }).length
+    // Calculate average reschedule rate (90d)
+    const totalRate90d = tutors.reduce((sum, tutor) => {
+      return sum + (tutor.reschedule_rate_90d || tutor.tutor_score?.reschedule_rate_90d || 0)
+    }, 0)
+    const averageRescheduleRate90d = totalTutors > 0 ? totalRate90d / totalTutors : 0
 
     return {
       totalTutors,
       highRiskCount,
       averageRescheduleRate,
-      recentActivity,
+      averageRescheduleRate90d,
     }
   }, [data])
 
@@ -75,20 +71,23 @@ function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatsCard
           label="Total Tutors"
           value={stats.totalTutors}
+          icon="users"
           color="primary"
         />
         <StatsCard
-          label="High-Risk Tutors"
+          label="Tutors at Risk"
           value={stats.highRiskCount}
+          icon="alert-triangle"
           color={stats.highRiskCount > 0 ? 'danger' : 'success'}
         />
         <StatsCard
-          label="Average Reschedule Rate"
+          label="Avg Reschedule Rate (30d)"
           value={formatPercentage(stats.averageRescheduleRate)}
+          icon="percentage"
           color={
             stats.averageRescheduleRate >= RISK_THRESHOLD
               ? 'danger'
@@ -98,9 +97,16 @@ function Dashboard() {
           }
         />
         <StatsCard
-          label="Recent Activity"
-          value={stats.recentActivity}
-          color="primary"
+          label="Avg Reschedule Rate (90d)"
+          value={formatPercentage(stats.averageRescheduleRate90d)}
+          icon="trending-up"
+          color={
+            stats.averageRescheduleRate90d >= RISK_THRESHOLD
+              ? 'danger'
+              : stats.averageRescheduleRate90d >= RISK_THRESHOLD * 0.67
+              ? 'warning'
+              : 'success'
+          }
         />
       </div>
 
