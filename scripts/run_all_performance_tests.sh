@@ -101,3 +101,4 @@ echo "Files generated:"
 ls -lh "$RESULTS_DIR" | tail -n +2 | awk '{print "  " $9 " (" $5 ")"}'
 echo ""
 
+

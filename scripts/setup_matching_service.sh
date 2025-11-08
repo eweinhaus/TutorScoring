@@ -100,3 +100,4 @@ echo "  2. Run database migrations: cd backend && alembic upgrade head"
 echo "  3. Train model: python scripts/train_match_model.py"
 echo "  4. Generate data: python scripts/generate_matching_data.py"
 
+

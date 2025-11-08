@@ -542,3 +542,4 @@ The Tutor Quality Scoring System is designed with AI integration in mind, but th
 - Cost Calculator: https://openai.com/pricing
 - Best Practices: https://platform.openai.com/docs/guides/prompt-engineering
 
+

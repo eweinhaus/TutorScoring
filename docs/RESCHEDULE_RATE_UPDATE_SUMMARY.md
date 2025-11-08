@@ -169,3 +169,4 @@ The synthetic data is now **much more realistic**:
 - ✅ Training script matches data generation parameters
 
 The data generation script is ready for production use with realistic, statistically stable data.
+

@@ -134,3 +134,4 @@ But the **median prediction** (0.17%) suggests the model might be:
 
 Your data aligns with industry standards: **most matches are good (low churn), but you have a clear subset of high-risk matches (12.8%) that need attention.**
 
+

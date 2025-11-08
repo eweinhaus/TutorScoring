@@ -251,3 +251,4 @@ target_reschedule_rate=0.12  # 12% (matches data generation)
 - ✅ Aligned with training expectations
 
 **Bottom Line:** Yes, you should **reduce the reschedule rate to 10-15%** and **increase sessions per tutor** to make the data more realistic and statistically stable.
+
