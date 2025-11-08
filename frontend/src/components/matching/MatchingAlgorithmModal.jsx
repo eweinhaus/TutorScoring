@@ -159,7 +159,7 @@ function MatchingAlgorithmModal({ isOpen, onClose, onResultsReady }) {
                   disabled={!canRunMatching || matchingLoading}
                   className={`px-6 py-2 rounded-lg font-semibold transition-all ${
                     canRunMatching && !matchingLoading
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white shadow-md'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >

@@ -27,7 +27,7 @@ function Header() {
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -37,7 +37,7 @@ function Header() {
               to="/tutors"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/tutors')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -47,7 +47,7 @@ function Header() {
               to="/matching"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/matching')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -57,7 +57,7 @@ function Header() {
               to="/upcoming-sessions"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/upcoming-sessions')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -96,7 +96,7 @@ function Header() {
               to="/"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive('/')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -107,7 +107,7 @@ function Header() {
               to="/tutors"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive('/tutors')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -118,7 +118,7 @@ function Header() {
               to="/matching"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive('/matching')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}
@@ -129,7 +129,7 @@ function Header() {
               to="/upcoming-sessions"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive('/upcoming-sessions')
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white hover:bg-primary-dark hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
               onClick={() => setMobileMenuOpen(false)}

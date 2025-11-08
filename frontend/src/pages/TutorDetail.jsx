@@ -5,7 +5,6 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
 import RiskBadge from '../components/common/RiskBadge'
 import RescheduleTable from '../components/tutor/RescheduleTable'
-import { RISK_THRESHOLD } from '../utils/constants'
 import { formatPercentage, formatDate } from '../utils/formatters'
 
 /**
@@ -27,66 +26,6 @@ function TutorDetail() {
     return history.reschedules.slice(0, 20)
   }, [history])
 
-  // Generate insights
-  const insights = useMemo(() => {
-    if (!tutorScore) {
-      return {
-        riskLevel: 'Unknown',
-        description: 'No data available',
-        recommendations: [],
-      }
-    }
-
-    const score = tutorScore
-    // Convert string values to numbers for proper comparison
-    const rate30d = score.reschedule_rate_30d != null ? parseFloat(score.reschedule_rate_30d) || 0 : 0
-    const rate7d = score.reschedule_rate_7d != null ? parseFloat(score.reschedule_rate_7d) || 0 : 0
-    const totalReschedules = score.tutor_reschedules_30d || 0
-    const totalSessions = score.total_sessions_30d || 0
-
-    let riskLevel = 'Low Risk'
-    let description = 'This tutor is performing well.'
-    const recommendations = []
-
-    if (rate30d >= RISK_THRESHOLD) {
-      riskLevel = 'High Risk'
-      description = `This tutor has a reschedule rate of ${formatPercentage(
-        rate30d
-      )}, which exceeds the ${RISK_THRESHOLD}% threshold.`
-      recommendations.push(
-        'Review recent reschedule patterns and reasons',
-        'Consider scheduling a performance review',
-        'Monitor closely for the next 7 days'
-      )
-    } else if (rate30d >= RISK_THRESHOLD * 0.67) {
-      riskLevel = 'Warning'
-      description = `This tutor is approaching the high-risk threshold with a ${formatPercentage(
-        rate30d
-      )} reschedule rate.`
-      recommendations.push(
-        'Monitor reschedule patterns',
-        'Consider proactive outreach'
-      )
-    }
-
-    if (rate7d > rate30d) {
-      recommendations.push(
-        'Recent reschedule rate is higher than 30-day average - investigate recent issues'
-      )
-    }
-
-    if (totalReschedules > 0 && totalSessions > 0) {
-      recommendations.push(
-        `${totalReschedules} reschedule${totalReschedules !== 1 ? 's' : ''} in the past 30 days out of ${totalSessions} total session${totalSessions !== 1 ? 's' : ''}`
-      )
-    }
-
-    return {
-      riskLevel,
-      description,
-      recommendations,
-    }
-  }, [tutorScore])
 
   if (isLoading) {
     return <LoadingSpinner message="Loading tutor details..." />
@@ -97,14 +36,14 @@ function TutorDetail() {
     const isNotFound = error.message && (error.message.includes('not found') || error.message.includes('404'))
     
     return (
-      <div className="card">
-        <h2 className="text-xl font-semibold mb-4">Tutor Not Found</h2>
-        <p className="text-gray-600 mb-4">
+      <div className="card p-4">
+        <h2 className="text-lg font-semibold mb-3">Tutor Not Found</h2>
+        <p className="text-sm text-gray-600 mb-3">
           {isNotFound 
             ? "The tutor you're looking for doesn't exist or has been removed. This may be due to data regeneration."
             : "Unable to load tutor information. Please try again."}
         </p>
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <Link to="/tutors" className="btn btn-primary">
             Back to Tutor List
           </Link>
@@ -120,9 +59,9 @@ function TutorDetail() {
 
   if (!tutor) {
     return (
-      <div className="card">
-        <h2 className="text-xl font-semibold mb-4">Tutor Not Found</h2>
-        <p className="text-gray-600 mb-4">
+      <div className="card p-4">
+        <h2 className="text-lg font-semibold mb-3">Tutor Not Found</h2>
+        <p className="text-sm text-gray-600 mb-3">
           The tutor you're looking for doesn't exist or has been removed.
         </p>
         <Link to="/tutors" className="btn btn-primary">
@@ -150,13 +89,13 @@ function TutorDetail() {
   return (
     <div>
       {/* Back Navigation */}
-      <div className="mb-4">
+      <div className="mb-3">
         <Link
           to="/tutors"
-          className="text-primary hover:text-primary-dark flex items-center"
+          className="text-primary hover:text-primary-dark flex items-center text-sm"
         >
           <svg
-            className="w-5 h-5 mr-2"
+            className="w-4 h-4 mr-1"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -173,35 +112,35 @@ function TutorDetail() {
       </div>
 
       {/* Tutor Header */}
-      <div className="card mb-6">
-        <div className="flex items-start justify-between mb-4">
+      <div className="card mb-4 p-4">
+        <div className="flex items-start justify-between mb-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {tutor.name}
             </h1>
-            <p className="text-gray-600 mb-4">{tutor.email || 'No email provided'}</p>
+            <p className="text-sm text-gray-600">{tutor.email || 'No email provided'}</p>
           </div>
           {rescheduleRate30d !== null && (
           <RiskBadge rate={rescheduleRate30d} size="large" />
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Total Sessions (90d)</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-xs text-gray-600 mb-1">Total Sessions (90d)</p>
+            <p className="text-xl font-bold text-gray-900">
               {score.total_sessions_90d || 0}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 mb-1">Reschedule Rate (90d)</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-xs text-gray-600 mb-1">Reschedule Rate (90d)</p>
+            <p className="text-xl font-bold text-gray-900">
               {formatPercentage(score.reschedule_rate_90d)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 mb-1">Last Updated</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-xs text-gray-600 mb-1">Last Updated</p>
+            <p className="text-xl font-bold text-gray-900">
               {formatDate(score.last_calculated_at || tutor.updated_at)}
             </p>
           </div>
@@ -209,35 +148,9 @@ function TutorDetail() {
       </div>
 
       {/* Recent Reschedules Table */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Reschedules</h2>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold mb-3">Recent Reschedules</h2>
         <RescheduleTable reschedules={recentReschedules} sortable={true} />
-      </div>
-
-      {/* Insights & Recommendations */}
-      <div className="card">
-        <h2 className="text-xl font-semibold mb-4">Insights & Recommendations</h2>
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Risk Level: {insights.riskLevel}
-            </h3>
-            <p className="text-gray-600">{insights.description}</p>
-          </div>
-
-          {insights.recommendations.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Recommendations
-              </h3>
-              <ul className="list-disc list-inside space-y-2 text-gray-600">
-                {insights.recommendations.map((rec, index) => (
-                  <li key={index}>{rec}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )

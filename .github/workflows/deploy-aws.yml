@@ -1,0 +1,140 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: tutor-scoring
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Create aws_config.env from secrets
+        working-directory: scripts/aws_deploy
+        run: |
+          cat > aws_config.env << EOF
+          export AWS_REGION=${{ env.AWS_REGION }}
+          export PROJECT_NAME=${{ env.PROJECT_NAME }}
+          export VPC_ID=${{ secrets.AWS_VPC_ID }}
+          export PUB_SUBNET_1=${{ secrets.AWS_PUB_SUBNET_1 }}
+          export PUB_SUBNET_2=${{ secrets.AWS_PUB_SUBNET_2 }}
+          export PRIV_SUBNET_1=${{ secrets.AWS_PRIV_SUBNET_1 }}
+          export PRIV_SUBNET_2=${{ secrets.AWS_PRIV_SUBNET_2 }}
+          export ALB_SG=${{ secrets.AWS_ALB_SG }}
+          export API_SG=${{ secrets.AWS_API_SG }}
+          export WORKER_SG=${{ secrets.AWS_WORKER_SG }}
+          export DB_SG=${{ secrets.AWS_DB_SG }}
+          export REDIS_SG=${{ secrets.AWS_REDIS_SG }}
+          export API_REPO_URI=${{ secrets.AWS_API_REPO_URI }}
+          export WORKER_REPO_URI=${{ secrets.AWS_WORKER_REPO_URI }}
+          export EXEC_ROLE_ARN=${{ secrets.AWS_EXEC_ROLE_ARN }}
+          export TASK_ROLE_ARN=${{ secrets.AWS_TASK_ROLE_ARN }}
+          export DB_ENDPOINT=${{ secrets.AWS_DB_ENDPOINT }}
+          export REDIS_ENDPOINT=${{ secrets.AWS_REDIS_ENDPOINT }}
+          export DB_SECRET_ARN=${{ secrets.AWS_DB_SECRET_ARN }}
+          export REDIS_SECRET_ARN=${{ secrets.AWS_REDIS_SECRET_ARN }}
+          export APP_SECRET_ARN=${{ secrets.AWS_APP_SECRET_ARN }}
+          export ALB_DNS=${{ secrets.AWS_ALB_DNS }}
+          export CLOUDFRONT_URL=${{ secrets.AWS_CLOUDFRONT_URL }}
+          EOF
+
+      - name: Build and push Docker images
+        working-directory: scripts/aws_deploy
+        run: |
+          chmod +x setup_ecr.sh
+          ./setup_ecr.sh
+
+      - name: Update ECS services
+        working-directory: scripts/aws_deploy
+        run: |
+          source aws_config.env
+          echo "Updating API service..."
+          aws ecs update-service \
+            --cluster ${PROJECT_NAME}-cluster \
+            --service ${PROJECT_NAME}-api-service \
+            --force-new-deployment \
+            --region $AWS_REGION
+
+          echo "Updating Worker service..."
+          aws ecs update-service \
+            --cluster ${PROJECT_NAME}-cluster \
+            --service ${PROJECT_NAME}-worker-service \
+            --force-new-deployment \
+            --region $AWS_REGION
+
+          echo "Waiting for services to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${PROJECT_NAME}-cluster \
+            --services ${PROJECT_NAME}-api-service ${PROJECT_NAME}-worker-service \
+            --region $AWS_REGION
+
+          echo "✅ Services updated and stable"
+
+      - name: Deploy frontend
+        working-directory: scripts/aws_deploy
+        run: |
+          chmod +x deploy_frontend.sh
+          ./deploy_frontend.sh
+
+      - name: Invalidate CloudFront cache
+        working-directory: scripts/aws_deploy
+        run: |
+          source aws_config.env
+          DIST_ID=$(aws cloudfront list-distributions \
+            --region $AWS_REGION \
+            --query "DistributionList.Items[?contains(Comment, '${PROJECT_NAME}')].Id" \
+            --output text | head -1)
+
+          if [ ! -z "$DIST_ID" ] && [ "$DIST_ID" != "None" ]; then
+            INVALIDATION_ID=$(aws cloudfront create-invalidation \
+              --distribution-id $DIST_ID \
+              --paths "/*" \
+              --region $AWS_REGION \
+              --query 'Invalidation.Id' \
+              --output text)
+            echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+          else
+            echo "⚠️  Could not find CloudFront distribution"
+          fi
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Backend services updated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Frontend deployed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ CloudFront cache invalidated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** CloudFront distribution may take 2-3 minutes to propagate changes." >> $GITHUB_STEP_SUMMARY
+

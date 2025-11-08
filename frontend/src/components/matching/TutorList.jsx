@@ -56,7 +56,7 @@ function TutorList({ tutors, selectedId, selectedIds, onSelect, onToggleSelect }
               </div>
               <button
                 onClick={(e) => handleViewDetails(e, tutor.id)}
-                className="ml-2 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                className="ml-2 px-2 py-1 text-xs font-medium text-blue-600 hover:text-white hover:bg-blue-600 rounded transition-colors"
                 title="View full profile"
               >
                 Details

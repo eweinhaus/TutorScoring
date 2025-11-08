@@ -39,7 +39,13 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-dark;
+    @apply bg-primary text-white hover:bg-primary-dark hover:text-white;
+  }
+  
+  /* Ensure buttons and links with button classes don't inherit default link colors */
+  .btn-primary,
+  a.btn-primary {
+    @apply text-white hover:text-white;
   }
 
   .btn-secondary {

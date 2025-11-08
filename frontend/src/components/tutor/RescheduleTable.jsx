@@ -61,20 +61,20 @@ function RescheduleTable({ reschedules = [], sortable = true }) {
 
   if (!reschedules || reschedules.length === 0) {
     return (
-      <div className="card">
-        <p className="text-center text-gray-500 py-8">No reschedules found</p>
+      <div className="card p-4">
+        <p className="text-center text-gray-500 py-4 text-sm">No reschedules found</p>
       </div>
     )
   }
 
   return (
-    <div className="card">
+    <div className="card p-0 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th
-                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                className={`px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
                   sortable ? 'cursor-pointer hover:bg-gray-100' : ''
                 }`}
                 onClick={() => handleSort('original_time')}
@@ -83,7 +83,7 @@ function RescheduleTable({ reschedules = [], sortable = true }) {
                 <SortIcon columnKey="original_time" />
               </th>
               <th
-                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                className={`px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
                   sortable ? 'cursor-pointer hover:bg-gray-100' : ''
                 }`}
                 onClick={() => handleSort('original_time')}
@@ -91,14 +91,14 @@ function RescheduleTable({ reschedules = [], sortable = true }) {
                 Original Time
                 <SortIcon columnKey="original_time" />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 New Time
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Reason
               </th>
               <th
-                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                className={`px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
                   sortable ? 'cursor-pointer hover:bg-gray-100' : ''
                 }`}
                 onClick={() => handleSort('hours_before_session')}
@@ -111,16 +111,16 @@ function RescheduleTable({ reschedules = [], sortable = true }) {
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedReschedules.map((reschedule) => (
               <tr key={reschedule.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                   {formatDateTime(reschedule.original_time)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                   {formatDateTime(reschedule.original_time)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                   {formatDateTime(reschedule.new_time)}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
+                <td className="px-4 py-2 text-sm text-gray-900">
                   <div className="max-w-xs truncate" title={reschedule.reason}>
                     {reschedule.reason || 'N/A'}
                   </div>
@@ -130,7 +130,7 @@ function RescheduleTable({ reschedules = [], sortable = true }) {
                     </div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                   {formatHours(reschedule.hours_before_session)}
                 </td>
               </tr>

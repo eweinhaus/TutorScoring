@@ -52,6 +52,7 @@ class TutorListResponse(BaseModel):
     id: UUID
     name: str
     reschedule_rate_30d: Optional[float] = None
+    reschedule_rate_90d: Optional[float] = None
     is_high_risk: bool = False
     total_sessions_30d: int = 0
     tutor_reschedules_30d: int = 0

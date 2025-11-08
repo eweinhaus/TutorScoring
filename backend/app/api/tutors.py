@@ -35,10 +35,11 @@ async def get_tutors_endpoint(
     sort_order: Optional[str] = Query("desc", description="Sort order: asc, desc"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
+    search: Optional[str] = Query(None, description="Search query to filter by name or email"),
     db: Session = Depends(get_db)
 ):
     """
-    Get list of tutors with filtering, sorting, and pagination.
+    Get list of tutors with filtering, sorting, pagination, and search.
     
     Returns tutors with their reschedule rates and risk flags.
     """
@@ -71,7 +72,8 @@ async def get_tutors_endpoint(
             sort_by=sort_by,
             sort_order=sort_order,
             limit=limit,
-            offset=offset
+            offset=offset,
+            search=search
         )
         
         # Convert to response models
@@ -83,6 +85,7 @@ async def get_tutors_endpoint(
                 id=tutor.id,
                 name=tutor.name,
                 reschedule_rate_30d=float(tutor_score.reschedule_rate_30d) if tutor_score and tutor_score.reschedule_rate_30d else None,
+                reschedule_rate_90d=float(tutor_score.reschedule_rate_90d) if tutor_score and tutor_score.reschedule_rate_90d else None,
                 is_high_risk=tutor_score.is_high_risk if tutor_score else False,
                 total_sessions_30d=tutor_score.total_sessions_30d if tutor_score else 0,
                 tutor_reschedules_30d=tutor_score.tutor_reschedules_30d if tutor_score else 0,

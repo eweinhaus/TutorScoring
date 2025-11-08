@@ -22,10 +22,11 @@ def get_tutors(
     sort_by: Optional[str] = "reschedule_rate_30d",
     sort_order: Optional[str] = "desc",
     limit: int = 100,
-    offset: int = 0
+    offset: int = 0,
+    search: Optional[str] = None
 ) -> Tuple[List[Tutor], int]:
     """
-    Get list of tutors with filtering, sorting, and pagination.
+    Get list of tutors with filtering, sorting, pagination, and search.
     
     Args:
         db: Database session
@@ -34,6 +35,7 @@ def get_tutors(
         sort_order: Sort order ('asc' or 'desc')
         limit: Maximum number of results
         offset: Pagination offset
+        search: Search query to filter by name or email (case-insensitive)
         
     Returns:
         Tuple of (list of tutors, total count)
@@ -41,6 +43,16 @@ def get_tutors(
     # Start with base query - use outerjoin to include all tutors (with or without scores)
     # Then use joinedload to eagerly load the relationship for efficient access
     query = db.query(Tutor).outerjoin(TutorScore).options(joinedload(Tutor.tutor_score))
+    
+    # Apply search filter (case-insensitive search on name and email)
+    if search and search.strip():
+        search_term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                Tutor.name.ilike(search_term),
+                and_(Tutor.email.isnot(None), Tutor.email.ilike(search_term))
+            )
+        )
     
     # Apply risk status filter
     if risk_status == "high_risk":
